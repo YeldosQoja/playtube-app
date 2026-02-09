@@ -10,6 +10,7 @@ on:
 jobs:
   build-push-container-image:
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       - name: Docker Hub Login
         uses: docker/login-action@v3

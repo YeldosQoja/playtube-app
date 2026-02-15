@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    name: Build and push new image
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -35,7 +36,9 @@ jobs:
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REPO }}:buildcache,mode=max
 
   deploy:
+    name: Pull and run new image
     runs-on: ubuntu-latest
+    needs: build
     environment: prod
     steps:
       - name: Configure AWS credentials (OIDC)

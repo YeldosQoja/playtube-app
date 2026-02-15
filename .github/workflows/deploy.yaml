@@ -5,18 +5,22 @@ on:
 
   push:
     tags:
-      - "v*.*.*" # matches tags like v1.0.0, v2.3.4
+      - "v*.*.*"
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  build-push-container-image:
+  build:
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - name: Docker Hub Login
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -29,3 +33,30 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REPO }}:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REPO }}:buildcache,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Deploy via AWS SSM
+        env:
+          IMAGE: ${{ vars.DOCKERHUB_REPO }}:${{ github.ref_name }}
+          AWS_EC2_ID: ${{ secrets.AWS_EC2_ID }}
+        run: |
+          aws ssm send-command \
+          --instance-ids $AWS_EC2_ID \
+          --document-name "AWS-RunShellScript" \
+          --comment "Deploy playtube-app $GITHUB_REF_NAME" \
+          --parameters 'commands=[
+            "set -euo pipefail",
+            "docker stop playtube-app || true",
+            "docker rm playtube-app || true",
+            "docker pull $IMAGE",
+            "docker run -d --name playtube-app --restart unless-stopped --env-file /home/ubuntu/playtube/.env -p 8080:3000 $IMAGE",
+            "docker image prune -af --filter \"until=48h\""
+          ]'

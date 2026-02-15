@@ -30,7 +30,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ vars.DOCKERHUB_REPO }}:${{ github.ref_name }}
+          tags: |
+            ${{ vars.DOCKERHUB_REPO }}:${{ github.sha }}
+            ${{ vars.DOCKERHUB_REPO }}:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=registry,ref=${{ vars.DOCKERHUB_REPO }}:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKERHUB_REPO }}:buildcache,mode=max
@@ -48,13 +50,13 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - name: Deploy via AWS SSM
         env:
-          IMAGE: ${{ vars.DOCKERHUB_REPO }}:${{ github.ref_name }}
+          IMAGE: ${{ vars.DOCKERHUB_REPO }}:${{ github.sha }}
           AWS_EC2_ID: ${{ secrets.AWS_EC2_ID }}
         run: |
           aws ssm send-command \
           --instance-ids $AWS_EC2_ID \
           --document-name "AWS-RunShellScript" \
-          --comment "Deploy playtube-app $GITHUB_REF_NAME" \
+          --comment "Deploy playtube-app $GITHUB_SHA" \
           --parameters 'commands=[
             "set -euo pipefail",
             "docker stop playtube-app || true",

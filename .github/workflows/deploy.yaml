@@ -58,7 +58,7 @@ jobs:
           --document-name "AWS-RunShellScript" \
           --comment "Deploy playtube-app $GITHUB_SHA" \
           --parameters 'commands=[
-            "set -euo pipefail",
+            "set -eu",
             "docker stop playtube-app || true",
             "docker rm playtube-app || true",
             "docker pull $IMAGE",

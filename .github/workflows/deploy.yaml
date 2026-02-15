@@ -61,7 +61,7 @@ jobs:
             "set -eu",
             "docker stop playtube-app || true",
             "docker rm playtube-app || true",
-            "docker pull $IMAGE",
-            "docker run -d --name playtube-app --restart unless-stopped --env-file /home/ubuntu/playtube/.env -p 8080:3000 $IMAGE",
+            "docker pull ${{ env.IMAGE }}",
+            "docker run -d --name playtube-app --restart unless-stopped --env-file /home/ubuntu/playtube/.env -p 8080:3000 ${{ env.IMAGE }}",
             "docker image prune -af --filter \"until=48h\""
           ]'

@@ -11,6 +11,7 @@ export const getAwsConfig = () => ({
   cloudFront: {
     baseUrl: process.env["S3_CDN"]!,
     keyGroupId: process.env["CDN_KEY_GROUP_ID"]!,
+    secretName: process.env["CDN_SECRET_NAME"] || "PrivateKey",
   },
   sqs: {
     queueUrl: process.env["SQS_QUEUE_URL"],

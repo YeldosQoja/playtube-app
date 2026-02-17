@@ -17,7 +17,9 @@ export const pool = new pg.Pool({
   user: process.env["DB_USER"] || "",
   database: process.env["DB_NAME"] || "",
   password: process.env["DB_PASSWORD"] || "secret",
-  ssl: !!process.env["DB_SSL"],
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 export const db = drizzle(pool, {

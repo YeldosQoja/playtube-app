@@ -12,7 +12,12 @@ import * as videosToPlaylistsSchema from "./schema/videosToPlaylists.sql.js";
 import * as videosToTagsSchema from "./schema/videosToTags.sql.js";
 
 export const pool = new pg.Pool({
-  connectionString: process.env["DATABASE_URL"],
+  host: process.env["DB_HOST"] || "",
+  port: parseInt(process.env["DB_PORT"] || "5432"),
+  user: process.env["DB_USER"] || "",
+  database: process.env["DB_NAME"] || "",
+  password: process.env["DB_PASSWORD"] || "secret",
+  ssl: !!process.env["DB_SSL"],
 });
 
 export const db = drizzle(pool, {

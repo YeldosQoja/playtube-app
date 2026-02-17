@@ -8,34 +8,13 @@ const s3Service = new S3Service();
 
 router.post("/", async (req, res) => {
   const { contentType } = req.body;
-
-  const videoId = nanoid();
-  const key = `uploads/${req.user!.username}/videos/${videoId}`;
-
+  const key = nanoid();
   const command = s3Service.createSimpleUpload(key, contentType);
   const url = await s3Service.getSignedUrl(command);
-
   res.status(HttpStatusCode.OK).send({
     msg: "Success!",
     url,
-    videoId,
-  });
-});
-
-router.post("/thumbnail", async (req, res) => {
-  const { user } = req;
-  const { contentType } = req.body;
-
-  const thumbnailId = nanoid();
-  const key = `uploads/${user!.username}/thumbnails/${thumbnailId}`;
-
-  const command = s3Service.createSimpleUpload(key, contentType);
-  const url = await s3Service.getSignedUrl(command);
-
-  res.status(HttpStatusCode.OK).send({
-    msg: "Success!",
-    url,
-    thumbnailId,
+    key,
   });
 });
 

@@ -363,6 +363,7 @@ export async function createUser(
       .returning({ id: users.id, username: users.username });
     return result[0];
   } catch (err) {
+    console.log(err);
     throw new AppError(
       `DB Error: create user failed.`,
       HttpStatusCode.SERVER_ERROR,

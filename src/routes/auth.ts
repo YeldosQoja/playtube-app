@@ -1,10 +1,14 @@
+import crypto from "node:crypto";
+import { promisify } from "node:util";
 import express from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import crypto from "node:crypto";
 import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import { ensureAuthenticated } from "../middlewares.js";
 import { findUserByUsername, findUserById, createUser } from "../db/queries.js";
+import AppError from "../utils/AppError.js";
+
+const pbkdf2Async = promisify(crypto.pbkdf2);
 
 const router = express.Router();
 
@@ -15,33 +19,34 @@ passport.use(
     try {
       const user = await findUserByUsername(username);
       if (!user) {
-        return cb(null, false, {
-          message: "There is no such user with username " + username,
-        });
+        return cb(
+          new AppError(
+            "There is no such user with username " + username,
+            HttpStatusCode.UNAUTHORIZED,
+            false,
+          ),
+          false,
+        );
       }
       const { salt } = user;
-      crypto.pbkdf2(
+      const hashedPassword = await pbkdf2Async(
         password,
         salt,
         ITERATIONS,
         32,
         "sha256",
-        (err, hashedPassword) => {
-          if (err) {
-            return cb(err);
-          }
-          if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
-            return cb(null, false, {
-              message: "Incorrect password.",
-            });
-          }
-          return cb(null, user);
-        }
       );
+      if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
+        return cb(
+          new AppError("Incorrect password.", HttpStatusCode.UNAUTHORIZED),
+          false,
+        );
+      }
+      return cb(null, user);
     } catch (err) {
-      return cb(err);
+      return cb(err, false);
     }
-  })
+  }),
 );
 
 passport.serializeUser((user, cb) => {
@@ -68,75 +73,54 @@ router.post("/signin", (req, res, next) => {
       if (err) {
         return next(err);
       }
-      if (!user) {
-        return res.json({ err: info });
-      }
       req.login(user, (err) => {
         if (err) {
-          throw err;
+          next(err);
         }
         res.status(HttpStatusCode.OK).json({ msg: "Login successful!" });
       });
-    }
+    },
   )(req, res, next);
 });
 
 router.post("/signup", async (req, res, next) => {
   const { firstName, lastName, username, email, password } = req.body;
   const salt = crypto.randomBytes(16);
-  crypto.pbkdf2(
+  const hashedPassword = await pbkdf2Async(
     password,
     salt,
     ITERATIONS,
     32,
     "sha256",
-    async (err, hashedPassword) => {
-      if (err) {
-        return next(err);
-      }
-      try {
-        const user = await createUser({
-          firstName,
-          lastName,
-          email,
-          password: hashedPassword,
-          username,
-          salt,
-        });
-        req.login(user as Express.User, (err) => {
-          if (err) {
-            throw err;
-          }
-          console.log("session saved!");
-          res.status(HttpStatusCode.OK).json({ user, msg: "User created!" });
-        });
-      } catch (err) {
-        next(err);
-      }
-    }
   );
+
+  const user = await createUser({
+    firstName,
+    lastName,
+    email,
+    password: hashedPassword,
+    username,
+    salt,
+  });
+
+  req.login(user as Express.User, (err) => {
+    if (err) {
+      return next(err);
+    }
+    res.status(HttpStatusCode.OK).json({ user, msg: "User created!" });
+  });
 });
 
 router.get("/me", ensureAuthenticated, async (req, res) => {
-  try {
-    const user = await findUserById(req.user!.id);
+  const user = await findUserById(req.user!.id);
 
-    if (!user) {
-      res.status(HttpStatusCode.UNAUTHORIZED).json({ error: "Unauthorized" });
-      return;
-    }
-
-    res.status(HttpStatusCode.OK).json({
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      createdAt: user.createdAt,
-    });
-  } catch (err) {
-    console.error("Error fetching user:", err);
-    res.status(HttpStatusCode.SERVER_ERROR).json({ error: "Server error" });
-  }
+  res.status(HttpStatusCode.OK).json({
+    username: user.username,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    createdAt: user.createdAt,
+  });
 });
 
 export default router;

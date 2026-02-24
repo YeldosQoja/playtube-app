@@ -25,7 +25,7 @@ const port = process.env["PORT"];
 const sessionSecret = process.env["SESSION_SECRET"] as string;
 const userSessionsTable = process.env["SESSION_TABLE"] || "user_sessions";
 const env = process.env["NODE_ENV"] || "development";
-const origin = process.env["ALLOWED_ORIGIN"] || "http://localhost:5173";
+const origins = process.env["ALLOWED_ORIGINS"] || "*";
 
 app.use(
   session({
@@ -50,7 +50,7 @@ app.use(passport.session());
 app.use(express.json());
 app.use(
   cors({
-    origin,
+    origin: origins.split(","),
     credentials: true,
   })
 );

@@ -4,11 +4,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import crypto from "node:crypto";
 import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import { ensureAuthenticated } from "../middlewares.js";
-import {
-  findUserByUsername,
-  findUserById,
-  createUser,
-} from "../db/queries.js";
+import { findUserByUsername, findUserById, createUser } from "../db/queries.js";
 
 const router = express.Router();
 

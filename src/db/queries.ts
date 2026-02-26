@@ -9,11 +9,12 @@ import { users } from "./schema/users.sql.js";
 import { tags } from "./schema/tags.sql.js";
 import { videosToPlaylists } from "./schema/videosToPlaylists.sql.js";
 import { videosToTags } from "./schema/videosToTags.sql.js";
+import { nanoid } from "nanoid";
 
-export async function findVideoByPublicKey(publicKey: string) {
+export async function findVideoByKey(key: string) {
   try {
     const video = await db.query.videos.findFirst({
-      where: (fields, operators) => operators.eq(fields.publicKey, publicKey),
+      where: (fields, operators) => operators.eq(fields.key, key),
       with: {
         author: {
           columns: {
@@ -41,9 +42,9 @@ export async function findVideoByPublicKey(publicKey: string) {
     });
     if (!video) {
       throw new AppError(
-        `Video not found with public key ${publicKey}.`,
+        `Video not found with key ${key}.`,
         HttpStatusCode.NOT_FOUND,
-        true
+        true,
       );
     }
     return video;
@@ -52,11 +53,11 @@ export async function findVideoByPublicKey(publicKey: string) {
       throw err;
     }
     throw new AppError(
-      `DB Error: finding video by public key ${publicKey} failed. Error message: ${
+      `DB Error: finding video by key ${key} failed. Error message: ${
         (err as DrizzleError).message
       }`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -83,47 +84,25 @@ export async function getUploadedVideos() {
     throw new AppError(
       `DB Error: failed to get a list of updated videos.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
 
 export async function updateVideo(
-  publicKey: string,
-  data: Partial<typeof videos.$inferSelect>
-) {
-  try {
-    await db.update(videos).set(data).where(eq(videos.publicKey, publicKey));
-  } catch (err) {
-    throw new AppError(
-      `DB Error: update video with public key ${publicKey} failed.`,
-      HttpStatusCode.SERVER_ERROR,
-      false
-    );
-  }
-}
-
-export async function deleteVideo(publicKey: string) {
-  try {
-    await db.delete(videos).where(eq(videos.publicKey, publicKey));
-  } catch (err) {
-    throw new AppError(
-      `DB Error: delete video with public key ${publicKey} failed.`,
-      HttpStatusCode.SERVER_ERROR,
-      false
-    );
-  }
-}
-
-export async function createVideoTx(
-  data: Omit<typeof videos.$inferInsert, "id">,
+  key: string,
+  data: Partial<typeof videos.$inferSelect>,
   playlist: number,
-  tagNames: string[]
+  tagNames: string[],
 ) {
   try {
     await db.transaction(async (tx) => {
-      const videoResult = await tx.insert(videos).values(data).returning();
-      const video = videoResult[0];
+      const res = await tx
+        .update(videos)
+        .set(data)
+        .where(eq(videos.key, key))
+        .returning();
+      const video = res[0];
 
       if (video === undefined) {
         tx.rollback();
@@ -175,44 +154,119 @@ export async function createVideoTx(
     });
   } catch (err) {
     throw new AppError(
-      `DB Error: create video transaction failed. Error Message: ${
-        (err as DrizzleError).message
-      }`,
+      `DB Error: update video with key ${key} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
 
-export async function updateVideoStatus(storageKey: string, status: string) {
+export async function deleteVideo(key: string) {
   try {
-    await db
-      .update(videos)
-      .set({ status })
-      .where(eq(videos.storageKey, storageKey));
+    await db.delete(videos).where(eq(videos.key, key));
+  } catch (err) {
+    throw new AppError(
+      `DB Error: delete video with key ${key} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function createVideoDraft(
+  data: typeof videos.$inferInsert,
+  playlist?: number,
+  tagNames?: string[],
+) {
+  try {
+    await db.transaction(async (tx) => {
+      const res = await tx.insert(videos).values(data).returning();
+      const video = res[0];
+
+      if (video === undefined) {
+        tx.rollback();
+        return;
+      }
+
+      if (playlist) {
+        await tx.insert(videosToPlaylists).values({
+          video: video.id,
+          playlist,
+          addedAt: new Date().toISOString(),
+        });
+      }
+
+      if (tagNames) {
+        for (const tagName of tagNames) {
+          const tagsResult = await tx
+            .select({
+              id: tags.id,
+              count: tags.count,
+            })
+            .from(tags)
+            .where(eq(tags.name, tagName));
+
+          let tag = tagsResult[0];
+
+          if (!tag) {
+            const result = await tx
+              .insert(tags)
+              .values({
+                name: tagName,
+              })
+              .returning();
+
+            tag = result[0];
+          } else {
+            await tx
+              .update(tags)
+              .set({
+                count: sql`${tags.count} + 1`,
+              })
+              .where(eq(tags.name, tagName));
+          }
+
+          await tx.insert(videosToTags).values({
+            video: video.id,
+            tag: tag!.id,
+          });
+        }
+      }
+    });
+  } catch (err) {
+    throw new AppError(
+      `DB Error: create video transaction failed. Error Message: ${
+        (err as DrizzleError).message
+      }`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function updateVideoStatus(key: string, status: string) {
+  try {
+    await db.update(videos).set({ status }).where(eq(videos.key, key));
   } catch (err) {
     if (err instanceof AppError) {
       throw err;
     }
     throw new AppError(
-      `DB Error: failed to change video storageKey: ${storageKey} status to ${status}: ${
+      `DB Error: failed to change video key: ${key} status to ${status}: ${
         (err as DrizzleError).message
       }`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
 
 export async function updateStatusForMultipleVideos(
   keys: string[],
-  status: string
+  status: string,
 ) {
   try {
-    await db
-      .update(videos)
-      .set({ status })
-      .where(inArray(videos.storageKey, keys));
+    await db.update(videos).set({ status }).where(inArray(videos.key, keys));
   } catch (err) {
     if (err instanceof AppError) {
       throw err;
@@ -222,7 +276,7 @@ export async function updateStatusForMultipleVideos(
         (err as DrizzleError).message
       }`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -236,7 +290,7 @@ export async function findVideoById(id: number) {
       throw new AppError(
         `Video not found with id ${id}.`,
         HttpStatusCode.NOT_FOUND,
-        true
+        true,
       );
     }
     return video;
@@ -247,14 +301,14 @@ export async function findVideoById(id: number) {
     throw new AppError(
       `DB Error: finding video by id ${id} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
 
 // Comments queries
 export async function createComment(
-  data: Omit<typeof comments.$inferInsert, "id" | "createdAt">
+  data: Omit<typeof comments.$inferInsert, "id" | "createdAt">,
 ) {
   try {
     const result = await db.insert(comments).values(data).returning();
@@ -263,7 +317,7 @@ export async function createComment(
     throw new AppError(
       `DB Error: create comment failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -275,7 +329,7 @@ export async function updateComment(id: number, content: string) {
     throw new AppError(
       `DB Error: update comment with id ${id} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -283,7 +337,7 @@ export async function updateComment(id: number, content: string) {
 export async function getCommentsByVideoId(
   videoId: number,
   limit: number,
-  offset: number = 0
+  offset: number = 0,
 ) {
   try {
     const result = await db
@@ -297,7 +351,7 @@ export async function getCommentsByVideoId(
     throw new AppError(
       `DB Error: get comments for video ${videoId} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -312,7 +366,7 @@ export async function findUserByUsername(username: string) {
       throw new AppError(
         `There is no such user ${username}`,
         HttpStatusCode.NOT_FOUND,
-        true
+        true,
       );
     }
     return user;
@@ -323,7 +377,7 @@ export async function findUserByUsername(username: string) {
     throw new AppError(
       `DB Error: finding user by username ${username} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
@@ -337,7 +391,7 @@ export async function findUserById(id: number) {
       throw new AppError(
         `User not found with id ${id}`,
         HttpStatusCode.NOT_FOUND,
-        true
+        true,
       );
     }
     return user;
@@ -348,13 +402,13 @@ export async function findUserById(id: number) {
     throw new AppError(
       `DB Error: finding user by id ${id} failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }
 
 export async function createUser(
-  data: Omit<typeof users.$inferInsert, "id" | "createdAt">
+  data: Omit<typeof users.$inferInsert, "id" | "createdAt">,
 ) {
   try {
     const result = await db
@@ -367,7 +421,7 @@ export async function createUser(
     throw new AppError(
       `DB Error: create user failed.`,
       HttpStatusCode.SERVER_ERROR,
-      false
+      false,
     );
   }
 }

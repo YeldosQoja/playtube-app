@@ -14,13 +14,10 @@ export const videos = pgTable("videos", {
   author: integer("author")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
-  publicKey: varchar("public_key", { length: 60 }).unique().notNull(),
-  storageKey: varchar("storage_key", { length: 60 }).unique().notNull(),
-  thumbnailStorageKey: varchar("thumbnail_storage_key", {
+  key: varchar("key", { length: 60 }).unique().notNull(),
+  thumbnailKey: varchar("thumbnail_key", {
     length: 60,
-  })
-    .unique()
-    .notNull(),
+  }).unique(),
   title: varchar("title", { length: 60 }).notNull(),
   desc: text("desc"),
   category: integer("category").references(() => categories.id, {

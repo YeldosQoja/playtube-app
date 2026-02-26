@@ -20,13 +20,12 @@ router.post("/", async (req, res) => {
 
 router.post("/multipart/start", async (req, res) => {
   const { user } = req;
-  const { contentType, fileSize } = req.body;
+  const { key, contentType, fileSize } = req.body;
 
-  const videoId = nanoid();
-  const key = `uploads/${user!.username}/videos/${videoId}`;
+  const fullKey = `uploads/${user!.username}/videos/${key}`;
 
   const partCount = Math.ceil(fileSize / 20_000_000);
-  const command = s3Service.createMultipartUpload(key, contentType);
+  const command = s3Service.createMultipartUpload(fullKey, contentType);
 
   const { UploadId } = await s3Service.sendCommand(command);
 
@@ -40,7 +39,7 @@ router.post("/multipart/start", async (req, res) => {
   const urls = await Promise.all(
     Array.from({ length: partCount }, async (_, i) => {
       const PartNumber = i + 1;
-      const partCommand = s3Service.createPartUpload(key, UploadId, PartNumber);
+      const partCommand = s3Service.createPartUpload(fullKey, UploadId, PartNumber);
       const url = await s3Service.getSignedUrl(partCommand);
 
       return { PartNumber, url };
@@ -49,7 +48,6 @@ router.post("/multipart/start", async (req, res) => {
 
   res.status(HttpStatusCode.OK).send({
     msg: "Multipart upload has successfully created!",
-    videoId,
     uploadId: UploadId,
     urls,
   });
@@ -57,11 +55,11 @@ router.post("/multipart/start", async (req, res) => {
 
 router.post("/multipart/complete", async (req, res) => {
   const { user } = req;
-  const { uploadId, videoId, contentType, parts } = req.body;
+  const { uploadId, key, contentType, parts } = req.body;
 
-  const key = `uploads/${user!.username}/videos/${videoId}`;
+  const fullKey = `uploads/${user!.username}/videos/${key}`;
 
-  const command = s3Service.completeMultipartUpload(key, uploadId, parts);
+  const command = s3Service.completeMultipartUpload(fullKey, uploadId, parts);
 
   await s3Service.client.send(command);
 
@@ -72,17 +70,17 @@ router.post("/multipart/complete", async (req, res) => {
 
 router.post("/multipart/abort", async (req, res) => {
   const { user } = req;
-  const { uploadId, videoId } = req.body;
+  const { uploadId, key } = req.body;
 
-  if (!uploadId || !videoId) {
+  if (!uploadId || !key) {
     res.status(HttpStatusCode.BAD_REQUEST).send({
-      err: "uploadId and videoId are required",
+      err: "uploadId and key are required",
     });
     return;
   }
 
-  const key = `uploads/${user!.username}/videos/${videoId}`;
-  const command = s3Service.abortMultipartUpload(key, uploadId);
+  const fullKey = `uploads/${user!.username}/videos/${key}`;
+  const command = s3Service.abortMultipartUpload(fullKey, uploadId);
 
   const response = await s3Service.client.send(command);
 

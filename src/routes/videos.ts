@@ -1,66 +1,50 @@
 import express from "express";
-import { nanoid } from "nanoid";
 import { CloudFrontService } from "../services/aws/CloudFrontService.js";
-import AppError from "../utils/AppError.js";
 import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import {
-  findVideoByPublicKey,
+  findVideoByKey,
   updateVideo,
   deleteVideo,
   getCommentsByVideoId,
-  createVideoTx,
   getUploadedVideos,
+  createVideoDraft,
 } from "../db/queries.js";
+import { nanoid } from "nanoid";
 
 const router = express.Router();
 
 const cloudFrontService = new CloudFrontService();
+
+router.post("/", async (req, res) => {
+  const { title } = req.body;
+
+  const videoKey = nanoid();
+
+  await createVideoDraft({
+    author: req.user!.id,
+    key: videoKey,
+    title,
+    createdAt: new Date().toISOString(),
+    lastUpdatedAt: new Date().toISOString(),
+  });
+
+  res.status(HttpStatusCode.OK).send({ key: videoKey });
+});
 
 router.get("", async (req, res) => {
   const videos = await getUploadedVideos();
   res.status(HttpStatusCode.OK).send({ videos });
 });
 
-router.post("/create", async (req, res) => {
-  const {
-    title,
-    desc,
-    storageKey,
-    thumbnailStorageKey,
-    playlist,
-    category,
-    isForKids,
-    isAgeRestricted,
-    allowComments,
-    allowDownloads,
-    tags,
-  } = req.body;
-
-  await createVideoTx(
-    {
-      author: req.user!.id,
-      desc,
-      publicKey: nanoid(),
-      storageKey,
-      thumbnailStorageKey,
-      title,
-      category,
-      isForKids,
-      isAgeRestricted,
-      allowComments,
-      allowDownloads,
-      createdAt: new Date().toISOString(),
-      lastUpdatedAt: new Date().toISOString(),
-    },
-    playlist,
-    tags.split(",")
-  );
-
+router.put("/:videoKey", async (req, res) => {
+  const { videoKey } = req.params;
+  const { playlist, tags, ...rest } = req.body;
+  await updateVideo(videoKey, rest, playlist, tags);
   res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
 });
 
-router.get("/:publicKey/comments", async (req, res) => {
-  const { publicKey } = req.params;
+router.get("/:videoKey/comments", async (req, res) => {
+  const { videoKey } = req.params;
   const offset = req.query["offset"] as string;
   const limit = req.query["limit"] as string;
 
@@ -71,11 +55,11 @@ router.get("/:publicKey/comments", async (req, res) => {
     return;
   }
 
-  const video = await findVideoByPublicKey(publicKey);
+  const video = await findVideoByKey(videoKey);
   const comments = await getCommentsByVideoId(
     video.id,
     parseInt(limit),
-    parseInt(offset || "0")
+    parseInt(offset || "0"),
   );
 
   res.status(HttpStatusCode.OK).send({
@@ -84,33 +68,10 @@ router.get("/:publicKey/comments", async (req, res) => {
   });
 });
 
-router.put("/:publicKey", async (req, res) => {
-  const { publicKey } = req.params;
-  const { title, desc } = req.body;
+router.delete("/:videoKey", async (req, res) => {
+  const { videoKey } = req.params;
 
-  const video = await findVideoByPublicKey(publicKey);
-
-  if (video.author !== req.user!.id) {
-    throw new AppError(
-      "You are not authorized to update this video.",
-      HttpStatusCode.FORBIDDEN,
-      true
-    );
-  }
-
-  await updateVideo(publicKey, {
-    title,
-    desc,
-    lastUpdatedAt: new Date().toISOString(),
-  });
-
-  res.status(HttpStatusCode.OK).send({ msg: "video updated successfully." });
-});
-
-router.delete("/:publicKey", async (req, res) => {
-  const { publicKey } = req.params;
-
-  const video = await findVideoByPublicKey(publicKey);
+  const video = await findVideoByKey(videoKey);
 
   if (video.author !== req.user!.id) {
     res
@@ -119,28 +80,28 @@ router.delete("/:publicKey", async (req, res) => {
     return;
   }
 
-  await deleteVideo(publicKey);
+  await deleteVideo(videoKey);
 
   res.status(HttpStatusCode.OK).send({ msg: "video deleted successfully." });
 });
 
-router.get("/:publicKey", async (req, res) => {
-  const { publicKey } = req.params;
+router.get("/:videoKey", async (req, res) => {
+  const { videoKey } = req.params;
 
   const user = req.user as Express.User;
 
-  const video = await findVideoByPublicKey(publicKey);
-  const { storageKey, thumbnailStorageKey, tags, ...rest } = video;
+  const video = await findVideoByKey(videoKey);
+  const { key, thumbnailKey, tags, ...rest } = video;
 
   const videoUrlPromise = cloudFrontService.generateSignedUrl(
     user.username,
-    storageKey,
-    Date.now() + 3600
+    key,
+    Date.now() + 3600,
   );
   const thumbnailUrlPromise = cloudFrontService.generateSignedUrl(
     user.username,
-    thumbnailStorageKey,
-    Date.now() + 3600
+    thumbnailKey!,
+    Date.now() + 3600,
   );
 
   const [videoUrl, thumbnailUrl] = await Promise.all([
@@ -149,10 +110,7 @@ router.get("/:publicKey", async (req, res) => {
   ]);
 
   // flattening tag objects
-  const data: Omit<
-    typeof video,
-    "tags" | "storageKey" | "thumbnailStorageKey"
-  > & {
+  const data: Omit<typeof video, "tags" | "key" | "thumbnailKey"> & {
     tags: { id: number; name: string }[];
     videoUrl: string;
     thumbnailUrl: string;

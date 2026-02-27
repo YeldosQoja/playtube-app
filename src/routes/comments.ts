@@ -1,7 +1,7 @@
 import express from "express";
 import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import {
-  findVideoByPublicKey,
+  findVideoByKey,
   createComment,
   updateComment,
 } from "../db/queries.js";
@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { videoPublicKey, text, parentId } = req.body;
 
-  const video = await findVideoByPublicKey(videoPublicKey);
+  const video = await findVideoByKey(videoPublicKey);
 
   await createComment({
     author: req.user!.id,

@@ -154,7 +154,7 @@ export async function updateVideo(
     });
   } catch (err) {
     throw new AppError(
-      `DB Error: update video with key ${key} failed.`,
+      `DB Error: update video with key ${key} failed. ${(err as DrizzleError).message}`,
       HttpStatusCode.SERVER_ERROR,
       false,
     );

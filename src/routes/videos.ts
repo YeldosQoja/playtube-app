@@ -15,7 +15,7 @@ const router = express.Router();
 
 const cloudFrontService = new CloudFrontService();
 
-router.post("/", async (req, res) => {
+router.post("", async (req, res) => {
   const { title } = req.body;
 
   const videoKey = nanoid();

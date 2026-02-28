@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -8,6 +9,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users.sql.js";
 import { categories } from "./categories.sql.js";
+
+export const privacyEnum = pgEnum("privacy", ["public", "private", "unlisted"]);
 
 export const videos = pgTable("videos", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity().unique(),
@@ -28,6 +31,7 @@ export const videos = pgTable("videos", {
   isAgeRestricted: boolean("is_age_restricted").default(false),
   allowComments: boolean("allow_comments").default(true),
   allowDownloads: boolean("allow_downloads").default(false),
+  privacy: privacyEnum("privacy").notNull(),
   createdAt: timestamp("created_at", {
     mode: "string",
     withTimezone: true,

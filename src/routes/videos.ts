@@ -8,6 +8,7 @@ import {
   getCommentsByVideoId,
   getUploadedVideos,
   createVideoDraft,
+  getVideoCategories,
 } from "../db/queries.js";
 import { nanoid } from "nanoid";
 
@@ -24,6 +25,7 @@ router.post("", async (req, res) => {
     author: req.user!.id,
     key: videoKey,
     title,
+    privacy: "private",
     createdAt: new Date().toISOString(),
     lastUpdatedAt: new Date().toISOString(),
   });
@@ -38,6 +40,7 @@ router.get("", async (req, res) => {
 
 router.put("/:videoKey", async (req, res) => {
   const { videoKey } = req.params;
+  console.log({ videoKey });
   const { playlist, tags, ...rest } = req.body;
   await updateVideo(videoKey, rest, playlist, tags);
   res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
@@ -121,6 +124,11 @@ router.get("/:videoKey", async (req, res) => {
     tags: tags.map(({ tag }) => tag),
   };
 
+  res.status(HttpStatusCode.OK).send({ data });
+});
+
+router.get("/categories", async (req, res) => {
+  const data = await getVideoCategories();
   res.status(HttpStatusCode.OK).send({ data });
 });
 

@@ -1,5 +1,5 @@
 import type { DrizzleError } from "drizzle-orm";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./index.js";
 import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import AppError from "../utils/AppError.js";
@@ -9,7 +9,8 @@ import { users } from "./schema/users.sql.js";
 import { tags } from "./schema/tags.sql.js";
 import { videosToPlaylists } from "./schema/videosToPlaylists.sql.js";
 import { videosToTags } from "./schema/videosToTags.sql.js";
-import { nanoid } from "nanoid";
+import { categories } from "./schema/categories.sql.js";
+import { playlists } from "./schema/playlists.sql.js";
 
 export async function findVideoByKey(key: string) {
   try {
@@ -420,6 +421,197 @@ export async function createUser(
     console.log(err);
     throw new AppError(
       `DB Error: create user failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function getVideoCategories() {
+  try {
+    const result = await db
+      .select({ id: categories.id, title: categories.title })
+      .from(categories);
+    return result;
+  } catch (err) {
+    throw new AppError(
+      "DB Error: can't fetch categories",
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+// Playlists queries
+export async function createPlaylist(data: typeof playlists.$inferInsert) {
+  try {
+    const result = await db.insert(playlists).values(data).returning();
+    return result[0];
+  } catch (err) {
+    throw new AppError(
+      "DB Error: create playlist failed.",
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function getPlaylistsByAuthor(authorId: number) {
+  try {
+    const result = await db.query.playlists.findMany({
+      where: (fields, operators) => operators.eq(fields.author, authorId),
+      orderBy: (fields, operators) => [operators.desc(fields.lastUpdatedAt)],
+      with: {
+        videosToPlaylists: {
+          columns: {
+            video: false,
+            playlist: false,
+            addedAt: false,
+          },
+        },
+      },
+    });
+
+    return result.map(({ videosToPlaylists, ...playlist }) => ({
+      ...playlist,
+      videoCount: videosToPlaylists.length,
+    }));
+  } catch (err) {
+    throw new AppError(
+      `DB Error: get playlists by author ${authorId} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function findPlaylistById(id: number) {
+  try {
+    const playlist = await db.query.playlists.findFirst({
+      where: (fields, operators) => operators.eq(fields.id, id),
+      with: {
+        videosToPlaylists: {
+          with: {
+            video: {
+              with: {
+                author: {
+                  columns: {
+                    id: false,
+                    password: false,
+                    salt: false,
+                    createdAt: false,
+                    email: false,
+                  },
+                },
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!playlist) {
+      throw new AppError(
+        `Playlist not found with id ${id}.`,
+        HttpStatusCode.NOT_FOUND,
+        true,
+      );
+    }
+
+    return playlist;
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError(
+      `DB Error: finding playlist by id ${id} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function updatePlaylist(
+  id: number,
+  data: Partial<typeof playlists.$inferInsert>,
+) {
+  try {
+    const result = await db
+      .update(playlists)
+      .set(data)
+      .where(eq(playlists.id, id))
+      .returning();
+    const playlist = result[0];
+
+    if (!playlist) {
+      throw new AppError(
+        `Playlist not found with id ${id}.`,
+        HttpStatusCode.NOT_FOUND,
+        true,
+      );
+    }
+
+    return playlist;
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    throw new AppError(
+      `DB Error: update playlist with id ${id} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function deletePlaylist(id: number) {
+  try {
+    await db.delete(playlists).where(eq(playlists.id, id));
+  } catch (err) {
+    throw new AppError(
+      `DB Error: delete playlist with id ${id} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function addVideoToPlaylist(videoId: number, playlistId: number) {
+  try {
+    await db
+      .insert(videosToPlaylists)
+      .values({
+        video: videoId,
+        playlist: playlistId,
+        addedAt: new Date().toISOString(),
+      })
+      .onConflictDoNothing();
+  } catch (err) {
+    throw new AppError(
+      `DB Error: add video ${videoId} to playlist ${playlistId} failed.`,
+      HttpStatusCode.SERVER_ERROR,
+      false,
+    );
+  }
+}
+
+export async function removeVideoFromPlaylist(
+  videoId: number,
+  playlistId: number,
+) {
+  try {
+    await db
+      .delete(videosToPlaylists)
+      .where(
+        and(
+          eq(videosToPlaylists.video, videoId),
+          eq(videosToPlaylists.playlist, playlistId),
+        ),
+      );
+  } catch (err) {
+    throw new AppError(
+      `DB Error: remove video ${videoId} from playlist ${playlistId} failed.`,
       HttpStatusCode.SERVER_ERROR,
       false,
     );

@@ -11,6 +11,7 @@ import authRouter from "./routes/auth.js";
 import videosRouter from "./routes/videos.js";
 import commentsRouter from "./routes/comments.js";
 import uploadRouter from "./routes/upload.js";
+import playlistsRouter from "./routes/playlists.js";
 import { ensureAuthenticated, handleError } from "./middlewares.js";
 import { errorHandler } from "./errorHandler.js";
 import AppError from "./utils/AppError.js";
@@ -59,6 +60,7 @@ app.use("/auth", authRouter);
 app.use("/videos", ensureAuthenticated, videosRouter);
 app.use("/comments", ensureAuthenticated, commentsRouter);
 app.use("/upload", ensureAuthenticated, uploadRouter);
+app.use("/playlists", ensureAuthenticated, playlistsRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {

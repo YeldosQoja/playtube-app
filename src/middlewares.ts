@@ -6,7 +6,7 @@ import { errorHandler } from "./errorHandler.js";
 export const ensureAuthenticated = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if (req.isAuthenticated()) {
     return next();
@@ -15,10 +15,19 @@ export const ensureAuthenticated = (
 };
 
 export const handleError = async (
-  err: AppError,
+  err: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  await errorHandler.handle(err, res);
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  if (err instanceof AppError) {
+    await errorHandler.handle(err, res);
+  }
+
+  res.status(HttpStatusCode.SERVER_ERROR).send({ error: "Something went wrong!" });
 };

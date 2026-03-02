@@ -44,7 +44,7 @@ app.use(
       sameSite: true,
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
-  })
+  }),
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -53,7 +53,7 @@ app.use(
   cors({
     origin: origins.split(","),
     credentials: true,
-  })
+  }),
 );
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
@@ -64,15 +64,11 @@ app.use("/playlists", ensureAuthenticated, playlistsRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {
-  errorHandler.handle(
-    new AppError(error.message, HttpStatusCode.SERVER_ERROR, false)
-  );
+  //
 });
 
 process.on("unhandledRejection", (reason) => {
-  errorHandler.handle(
-    new AppError(reason as string, HttpStatusCode.SERVER_ERROR, false)
-  );
+  //
 });
 
 app.listen(port, () => {

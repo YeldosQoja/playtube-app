@@ -13,9 +13,8 @@ import commentsRouter from "./routes/comments.js";
 import uploadRouter from "./routes/upload.js";
 import playlistsRouter from "./routes/playlists.js";
 import { ensureAuthenticated, handleError } from "./middlewares.js";
-import { errorHandler } from "./errorHandler.js";
-import AppError from "./utils/AppError.js";
-import { HttpStatusCode } from "./utils/HttpStatusCode.js";
+import logger from "./logger.js";
+import { pinoHttp } from "pino-http";
 
 export const app = express();
 dotenv.config();
@@ -28,6 +27,11 @@ const userSessionsTable = process.env["SESSION_TABLE"] || "user_sessions";
 const env = process.env["NODE_ENV"] || "development";
 const origins = process.env["ALLOWED_ORIGINS"] || "*";
 
+app.use(
+  pinoHttp({
+    logger,
+  }),
+);
 app.use(
   session({
     secret: sessionSecret,
@@ -64,11 +68,11 @@ app.use("/playlists", ensureAuthenticated, playlistsRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {
-  //
+  logger.fatal(error, "Uncaught exception found");
 });
 
 process.on("unhandledRejection", (reason) => {
-  //
+  logger.fatal({ reason }, "Unhandled rejection found");
 });
 
 app.listen(port, () => {

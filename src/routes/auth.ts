@@ -21,7 +21,7 @@ passport.use(
       if (!user) {
         return cb(
           new AppError(
-            "There is no such user with username " + username,
+            "Username or password is incorrect.",
             HttpStatusCode.UNAUTHORIZED,
             false,
           ),
@@ -38,7 +38,10 @@ passport.use(
       );
       if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
         return cb(
-          new AppError("Incorrect password.", HttpStatusCode.UNAUTHORIZED),
+          new AppError(
+            "Username or password is incorrect.",
+            HttpStatusCode.UNAUTHORIZED,
+          ),
           false,
         );
       }

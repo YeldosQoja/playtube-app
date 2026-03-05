@@ -38,6 +38,11 @@ router.get("", async (req, res) => {
   res.status(HttpStatusCode.OK).send({ videos });
 });
 
+router.get("/categories", async (req, res) => {
+  const data = await getVideoCategories();
+  res.status(HttpStatusCode.OK).send({ data });
+});
+
 router.put("/:videoKey", async (req, res) => {
   const { videoKey } = req.params;
   console.log({ videoKey });
@@ -124,11 +129,6 @@ router.get("/:videoKey", async (req, res) => {
     tags: tags.map(({ tag }) => tag),
   };
 
-  res.status(HttpStatusCode.OK).send({ data });
-});
-
-router.get("/categories", async (req, res) => {
-  const data = await getVideoCategories();
   res.status(HttpStatusCode.OK).send({ data });
 });
 

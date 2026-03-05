@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, countDistinct, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./index.js";
 import { videos } from "./schema/videos.sql.js";
 import { comments } from "./schema/comments.sql.js";
@@ -288,24 +288,18 @@ export async function createPlaylist(data: typeof playlists.$inferInsert) {
 }
 
 export async function getPlaylistsByAuthor(authorId: number) {
-  const result = await db.query.playlists.findMany({
-    where: (fields, operators) => operators.eq(fields.author, authorId),
-    orderBy: (fields, operators) => [operators.desc(fields.lastUpdatedAt)],
-    with: {
-      videosToPlaylists: {
-        columns: {
-          video: false,
-          playlist: false,
-          addedAt: false,
-        },
-      },
-    },
-  });
-
-  return result.map(({ videosToPlaylists, ...playlist }) => ({
-    ...playlist,
-    videoCount: videosToPlaylists.length,
-  }));
+  return await db
+    .select({
+      id: playlists.id,
+      title: playlists.title,
+      lastUpdatedAt: playlists.lastUpdatedAt,
+      videoCount: countDistinct(videosToPlaylists.video),
+    })
+    .from(playlists)
+    .innerJoin(videosToPlaylists, eq(playlists.id, videosToPlaylists.playlist))
+    .where(eq(playlists.author, authorId))
+    .groupBy(playlists.id)
+    .orderBy(playlists.lastUpdatedAt);
 }
 
 export async function findPlaylistById(id: number) {

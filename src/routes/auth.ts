@@ -7,6 +7,7 @@ import { HttpStatusCode } from "../utils/HttpStatusCode.js";
 import { ensureAuthenticated } from "../middlewares.js";
 import { findUserByUsername, findUserById, createUser } from "../db/queries.js";
 import AppError from "../utils/AppError.js";
+import logger from "../logger.js";
 
 const pbkdf2Async = promisify(crypto.pbkdf2);
 
@@ -64,6 +65,9 @@ passport.deserializeUser((username: string, cb) => {
       const user = await findUserByUsername(username);
       cb(null, user);
     } catch (err) {
+      logger.info(
+        "Invalid cookies provided. Unable to authenticate the request.",
+      );
       cb(err, null);
     }
   });
@@ -80,6 +84,7 @@ router.post("/signin", (req, res, next) => {
         if (err) {
           next(err);
         }
+        logger.info({ user }, "User has logged in.");
         res.status(HttpStatusCode.OK).json({ msg: "Login successful!" });
       });
     },
@@ -110,7 +115,10 @@ router.post("/signup", async (req, res, next) => {
     if (err) {
       return next(err);
     }
-    res.status(HttpStatusCode.OK).json({ user, msg: "User created!" });
+    logger.info({ user }, "Account created successfully.");
+    res
+      .status(HttpStatusCode.OK)
+      .json({ user, msg: "Account created successfully." });
   });
 });
 

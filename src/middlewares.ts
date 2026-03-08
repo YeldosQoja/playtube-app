@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { HttpStatusCode } from "./utils/HttpStatusCode.js";
 import AppError from "./utils/AppError.js";
 import { errorHandler } from "./errorHandler.js";
+import logger from "./logger.js";
 
 export const ensureAuthenticated = (
   req: Request,
@@ -11,6 +12,7 @@ export const ensureAuthenticated = (
   if (req.isAuthenticated()) {
     return next();
   }
+  logger.error("Unauthorized.");
   res.status(HttpStatusCode.UNAUTHORIZED).json({ msg: "Unauthorized" });
 };
 
@@ -27,7 +29,12 @@ export const handleError = async (
 
   if (err instanceof AppError) {
     await errorHandler.handle(err, res);
+    return;
   }
 
-  res.status(HttpStatusCode.SERVER_ERROR).send({ error: "Something went wrong!" });
+  logger.error(err, "DB or external services failed.");
+
+  res
+    .status(HttpStatusCode.SERVER_ERROR)
+    .send({ error: "Something went wrong!" });
 };

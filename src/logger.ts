@@ -4,7 +4,7 @@ const fileTransport = pino.transport({
   targets: [
     {
       target: "pino/file",
-      options: { destination: `${__dirname}/app.log` },
+      options: { destination: `${import.meta.dirname}/app.log` },
     },
     {
       target: "pino-pretty",
@@ -15,18 +15,6 @@ const fileTransport = pino.transport({
 const logger = pino(
   {
     level: process.env["NODE_ENV"] === "production" ? "info" : "trace",
-    formatters: {
-      bindings: (bindings) => {
-        return {
-          processId: bindings["pid"],
-          host: bindings["hostname"],
-          node: process.version,
-        };
-      },
-      level: (label) => {
-        return { level: label.toUpperCase() };
-      },
-    },
     timestamp: pino.stdTimeFunctions.isoTime,
     redact: {
       paths: [
@@ -35,6 +23,14 @@ const logger = pino(
         "address",
         "phone",
         "email",
+        "password",
+        "salt",
+        "user.firstName",
+        "user.lastName",
+        "user.email",
+        "user.username",
+        "user.password",
+        "user.salt",
         "*.user.firstName",
         "*.user.lastName",
         "*.user.email",
@@ -42,6 +38,7 @@ const logger = pino(
         "*.user.password",
         "*.user.salt",
       ],
+      remove: true,
     },
   },
   fileTransport,

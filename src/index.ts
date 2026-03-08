@@ -30,6 +30,9 @@ const origins = process.env["ALLOWED_ORIGINS"] || "*";
 app.use(
   pinoHttp({
     logger,
+    autoLogging: {
+      ignore: (req) => req.method === "OPTIONS",
+    },
   }),
 );
 app.use(

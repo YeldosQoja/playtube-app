@@ -15,6 +15,7 @@ import { getAwsConfig } from "../../config/aws.js";
 import { AwsService } from "./AWSService.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Command, RequestPresigningArguments } from "@aws-sdk/types";
+import logger from "../../logger.js";
 
 export class S3Service extends AwsService<
   S3Client,
@@ -48,6 +49,11 @@ export class S3Service extends AwsService<
       ContentType: contentType,
     });
 
+    logger.info(
+      { bucket: this.bucketName, key },
+      "CreateMultipartUploadCommand has been created.",
+    );
+
     return command;
   }
 
@@ -65,7 +71,7 @@ export class S3Service extends AwsService<
   completeMultipartUpload(
     key: string,
     uploadId: string,
-    parts: CompletedPart[]
+    parts: CompletedPart[],
   ) {
     const command = new CompleteMultipartUploadCommand({
       Bucket: this.bucketName,
@@ -91,7 +97,7 @@ export class S3Service extends AwsService<
 
   async getSignedUrl<
     InputType extends ServiceInputTypes,
-    OutputType extends ServiceOutputTypes
+    OutputType extends ServiceOutputTypes,
   >(
     command: Command<
       ServiceInputTypes,
@@ -100,7 +106,7 @@ export class S3Service extends AwsService<
       OutputType,
       S3ClientResolvedConfig
     >,
-    options?: RequestPresigningArguments
+    options?: RequestPresigningArguments,
   ) {
     // @ts-ignore
     return await getSignedUrl(this.client, command, options);

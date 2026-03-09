@@ -39,15 +39,18 @@ router.get("", async (req, res) => {
 });
 
 router.get("/categories", async (req, res) => {
-  const data = await getVideoCategories();
-  res.status(HttpStatusCode.OK).send({ data });
+  const categories = await getVideoCategories();
+  res.status(HttpStatusCode.OK).send({ categories });
 });
 
 router.put("/:videoKey", async (req, res) => {
   const { videoKey } = req.params;
-  console.log({ videoKey });
   const { playlist, tags, ...rest } = req.body;
-  await updateVideo(videoKey, rest, playlist, tags);
+  const tagNames = (tags as string)
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  await updateVideo(videoKey, rest, playlist, tagNames);
   res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
 });
 

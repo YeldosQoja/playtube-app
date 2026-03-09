@@ -11,6 +11,10 @@ import {
   getVideoCategories,
 } from "../db/queries.js";
 import { nanoid } from "nanoid";
+import { draftSchema, videoSchema } from "../db/schema/videos.sql.js";
+import AppError from "../utils/AppError.js";
+import z from "zod";
+import logger from "../logger.js";
 
 const router = express.Router();
 
@@ -18,10 +22,13 @@ const cloudFrontService = new CloudFrontService();
 
 router.post("", async (req, res) => {
   const { title } = req.body;
-
   const videoKey = nanoid();
 
-  await createVideoDraft({
+  const {
+    data: draft,
+    error,
+    success,
+  } = await draftSchema.safeParseAsync({
     author: req.user!.id,
     key: videoKey,
     title,
@@ -29,6 +36,17 @@ router.post("", async (req, res) => {
     createdAt: new Date().toISOString(),
     lastUpdatedAt: new Date().toISOString(),
   });
+
+  if (!success) {
+    logger.error(error, error.message);
+    throw new AppError(
+      "Video metadata incorrect.",
+      HttpStatusCode.BAD_REQUEST,
+      false,
+    );
+  }
+
+  await createVideoDraft(draft);
 
   res.status(HttpStatusCode.OK).send({ key: videoKey });
 });
@@ -46,11 +64,37 @@ router.get("/categories", async (req, res) => {
 router.put("/:videoKey", async (req, res) => {
   const { videoKey } = req.params;
   const { playlist, tags, ...rest } = req.body;
+
+  const {
+    data: video,
+    error,
+    success,
+  } = await videoSchema.safeParseAsync(rest);
+  if (!success) {
+    logger.error(error, error.message);
+    throw new AppError(
+      "Video metadata incorrect.",
+      HttpStatusCode.BAD_REQUEST,
+      false,
+    );
+  }
+
+  const playlistParsed = z.number().positive().safeParse(playlist);
+  if (!playlistParsed.success) {
+    logger.error(playlistParsed.error, playlistParsed.error.message);
+    throw new AppError(
+      "Video metadata incorrect.",
+      HttpStatusCode.BAD_REQUEST,
+      false,
+    );
+  }
+
   const tagNames = (tags as string)
     .split(",")
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
-  await updateVideo(videoKey, rest, playlist, tagNames);
+
+  await updateVideo(videoKey, video, playlistParsed.data, tagNames);
   res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
 });
 

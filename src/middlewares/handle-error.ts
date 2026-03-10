@@ -1,20 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpStatusCode } from "./utils/HttpStatusCode.js";
-import AppError from "./utils/AppError.js";
-import { errorHandler } from "./errorHandler.js";
-import logger from "./logger.js";
-
-export const ensureAuthenticated = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  logger.error("Unauthorized.");
-  res.status(HttpStatusCode.UNAUTHORIZED).json({ msg: "Unauthorized" });
-};
+import { HttpStatusCode } from "../utils/HttpStatusCode.js";
+import AppError from "../utils/AppError.js";
+import { errorHandler } from "../errorHandler.js";
+import logger from "../logger.js";
 
 export const handleError = async (
   err: unknown,

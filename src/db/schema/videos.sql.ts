@@ -7,8 +7,6 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import z from "zod";
-import { createInsertSchema, createUpdateSchema } from "drizzle-zod";
 import { users } from "./users.sql.js";
 import { categories } from "./categories.sql.js";
 
@@ -43,17 +41,3 @@ export const videos = pgTable("videos", {
     withTimezone: true,
   }).notNull(),
 });
-
-export const draftSchema = createInsertSchema(videos);
-export const videoSchema = createUpdateSchema(videos, {
-  thumbnailKey: z.string().nonempty(),
-  category: z.number().positive(),
-  isForKids: z.boolean(),
-  isAgeRestricted: z.boolean(),
-  allowComments: z.boolean(),
-  allowDownloads: z.boolean(),
-  privacy: z.literal(["public", "private", "unlisted"]),
-});
-
-export type DraftSchema = z.infer<typeof draftSchema>;
-export type VideoSchema = z.infer<typeof videoSchema>;

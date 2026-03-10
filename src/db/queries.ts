@@ -1,6 +1,6 @@
 import { and, countDistinct, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./index.js";
-import { DraftSchema, videos, VideoSchema } from "./schema/videos.sql.js";
+import { videos } from "./schema/videos.sql.js";
 import { comments } from "./schema/comments.sql.js";
 import { users } from "./schema/users.sql.js";
 import { tags } from "./schema/tags.sql.js";
@@ -65,7 +65,7 @@ export async function getUploadedVideos() {
 
 export async function updateVideo(
   key: string,
-  data: VideoSchema,
+  data: typeof videos.$inferInsert,
   playlist: number,
   tagNames: string[],
 ) {
@@ -132,7 +132,7 @@ export async function deleteVideo(key: string) {
 }
 
 export async function createVideoDraft(
-  data: DraftSchema,
+  data: typeof videos.$inferInsert,
   playlist?: number,
   tagNames?: string[],
 ) {

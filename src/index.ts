@@ -6,13 +6,14 @@ import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db/index.js";
 import passport from "passport";
 import cors from "cors";
-import indexRouter from "./routes/index.js";
-import authRouter from "./routes/auth.js";
-import videosRouter from "./routes/videos.js";
-import commentsRouter from "./routes/comments.js";
-import uploadRouter from "./routes/upload.js";
-import playlistsRouter from "./routes/playlists.js";
-import { ensureAuthenticated, handleError } from "./middlewares.js";
+import indexRouter from "./app/index/index.route.js";
+import authRouter from "./app/auth/auth.route.js";
+import videosRouter from "./app/videos/videos.route.js";
+import commentsRouter from "./app/comments/comments.route.js";
+import uploadRouter from "./app/upload/upload.route.js";
+import playlistsRouter from "./app/playlists/playlists.route.js";
+import { isAuthenticated } from "./middlewares/is-authenticated.js";
+import { handleError } from "./middlewares/handle-error.js";
 import logger from "./logger.js";
 import { pinoHttp } from "pino-http";
 
@@ -64,10 +65,10 @@ app.use(
 );
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
-app.use("/videos", ensureAuthenticated, videosRouter);
-app.use("/comments", ensureAuthenticated, commentsRouter);
-app.use("/upload", ensureAuthenticated, uploadRouter);
-app.use("/playlists", ensureAuthenticated, playlistsRouter);
+app.use("/videos", isAuthenticated, videosRouter);
+app.use("/comments", isAuthenticated, commentsRouter);
+app.use("/upload", isAuthenticated, uploadRouter);
+app.use("/playlists", isAuthenticated, playlistsRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {

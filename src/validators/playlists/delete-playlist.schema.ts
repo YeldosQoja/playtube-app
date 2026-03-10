@@ -1,0 +1,11 @@
+import z from "zod";
+
+const empty = z.object({});
+
+export const deletePlaylistSchema = z.object({
+  body: empty,
+  params: z.object({
+    id: z.coerce.number().int().positive(),
+  }),
+  query: empty,
+});

@@ -6,12 +6,10 @@
   "type": "module",
   "imports": {
     "#app/*.js": "./dist/app/*.js",
-    "#config/aws.js": "./dist/config/aws.js",
-    "#db": "./dist/db/index.js",
-    "#db/queries.js": "./dist/db/queries.js",
-    "#db/schema/*.js": "./dist/db/schema/*.js",
+    "#config/*.js": "./dist/config/*.js",
+    "#db/*.js": "./dist/db/*.js",
     "#middlewares/*.js": "./dist/middlewares/*.js",
-    "#lib/*.js": ".dist/lib/*.js",
+    "#lib/*.js": "./dist/lib/*.js",
     "#utils/*.js": "./dist/utils/*.js",
     "#services/*.js": "./dist/services/*.js",
     "#validators/*.js": "./dist/validators/*.js"

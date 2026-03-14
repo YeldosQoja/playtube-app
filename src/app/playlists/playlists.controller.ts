@@ -34,7 +34,7 @@ export const listPlaylistsHandler: RequestHandler = async (req, res) => {
 };
 
 export const getPlaylistHandler: RequestHandler = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = Number(req.params["id"]);
 
   const playlist = await getPlaylistById(id);
 
@@ -49,7 +49,7 @@ export const getPlaylistHandler: RequestHandler = async (req, res) => {
 };
 
 export const updatePlaylistHandler: RequestHandler = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = Number(req.params["id"]);
 
   const playlist = await getPlaylistById(id);
 
@@ -90,7 +90,7 @@ export const updatePlaylistHandler: RequestHandler = async (req, res) => {
 };
 
 export const deletePlaylistHandler: RequestHandler = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = Number(req.params["id"]);
 
   const playlist = await getPlaylistById(id);
 
@@ -107,8 +107,8 @@ export const deletePlaylistHandler: RequestHandler = async (req, res) => {
 };
 
 export const addVideoToPlaylistHandler: RequestHandler = async (req, res) => {
-  const playlistId = Number(req.params.playlistId);
-  const videoId = Number(req.params.videoId);
+  const playlistId = Number(req.params["playlistId"]);
+  const videoId = Number(req.params["videoId"]);
 
   const playlist = await getPlaylistById(playlistId);
 
@@ -139,8 +139,8 @@ export const removeVideoFromPlaylistHandler: RequestHandler = async (
   req,
   res,
 ) => {
-  const playlistId = Number(req.params.playlistId);
-  const videoId = Number(req.params.videoId);
+  const playlistId = Number(req.params["playlistId"]);
+  const videoId = Number(req.params["videoId"]);
 
   const playlist = await getPlaylistById(playlistId);
 

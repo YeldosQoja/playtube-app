@@ -21,7 +21,7 @@ export const createCommentHandler: RequestHandler = async (req, res) => {
 };
 
 export const updateCommentHandler: RequestHandler = async (req, res) => {
-  const id = Number(req.params.id);
+  const id = Number(req.params["id"]);
   const { text } = req.body;
 
   await updateCommentById(id, text);

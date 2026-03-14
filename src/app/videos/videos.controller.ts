@@ -29,7 +29,7 @@ export const listVideoCategoriesHandler: RequestHandler = async (req, res) => {
 };
 
 export const saveVideoHandler: RequestHandler = async (req, res) => {
-  const { videoKey } = req.params;
+  const videoKey = req.params["videoKey"];
   const { playlist, tags, ...rest } = req.body;
 
   await saveVideo(videoKey as string, rest, playlist, tags);
@@ -38,7 +38,7 @@ export const saveVideoHandler: RequestHandler = async (req, res) => {
 };
 
 export const getVideoCommentsHandler: RequestHandler = async (req, res) => {
-  const { videoKey } = req.params;
+  const videoKey = req.params["videoKey"];
   const limit = Number(req.query["limit"]);
   const offset = Number(req.query["offset"] ?? 0);
 
@@ -51,7 +51,7 @@ export const getVideoCommentsHandler: RequestHandler = async (req, res) => {
 };
 
 export const deleteVideoHandler: RequestHandler = async (req, res) => {
-  const { videoKey } = req.params;
+  const videoKey = req.params["videoKey"];
 
   const video = await getVideoByKey(videoKey as string);
 
@@ -68,7 +68,7 @@ export const deleteVideoHandler: RequestHandler = async (req, res) => {
 };
 
 export const getVideoHandler: RequestHandler = async (req, res) => {
-  const { videoKey } = req.params;
+  const videoKey = req.params["videoKey"];
 
   const data = await getVideoDetails(req.user!.username, videoKey as string);
 

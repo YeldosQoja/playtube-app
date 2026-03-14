@@ -3,18 +3,17 @@ import fs from "fs";
 import dotenv from "dotenv";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import { pool } from "./db/index.js";
+import { pool } from "#db/index.js";
 import passport from "passport";
 import cors from "cors";
-import indexRouter from "./app/index/index.route.js";
-import authRouter from "./app/auth/auth.route.js";
-import videosRouter from "./app/videos/videos.route.js";
-import commentsRouter from "./app/comments/comments.route.js";
-import uploadRouter from "./app/upload/upload.route.js";
-import playlistsRouter from "./app/playlists/playlists.route.js";
-import { isAuthenticated } from "./middlewares/is-authenticated.js";
-import { handleError } from "./middlewares/handle-error.js";
-import logger from "./logger.js";
+import authRouter from "#app/auth/auth.route.js";
+import videosRouter from "#app/videos/videos.route.js";
+import commentsRouter from "#app/comments/comments.route.js";
+import uploadRouter from "#app/upload/upload.route.js";
+import playlistsRouter from "#app/playlists/playlists.route.js";
+import { isAuthenticated } from "#middlewares/is-authenticated.js";
+import { handleError } from "#middlewares/handle-error.js";
+import logger from "#lib/logger.js";
 import { pinoHttp } from "pino-http";
 
 export const app = express();
@@ -63,7 +62,6 @@ app.use(
     credentials: true,
   }),
 );
-app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/videos", isAuthenticated, videosRouter);
 app.use("/comments", isAuthenticated, commentsRouter);

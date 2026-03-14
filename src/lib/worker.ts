@@ -7,11 +7,11 @@ import {
   SQSClient,
 } from "@aws-sdk/client-sqs";
 import dotenv from "dotenv";
-import { getAwsConfig } from "./config/aws.js";
+import { getAwsConfig } from "#config/aws.js";
 import {
   updateStatusForMultipleVideos,
   updateVideoStatus,
-} from "./db/queries.js";
+} from "#db/queries.js";
 
 dotenv.config();
 
@@ -27,7 +27,7 @@ const receiveMessage = (queueUrl: string) =>
       MessageAttributeNames: ["All"],
       QueueUrl: queueUrl,
       WaitTimeSeconds: 5,
-    })
+    }),
   );
 
 const processMessages = async (messages: Message[]) => {
@@ -71,7 +71,7 @@ export const main = async (queueUrl: string = SQS_QUEUE_URL) => {
           new DeleteMessageCommand({
             QueueUrl: queueUrl,
             ReceiptHandle: Messages[0]?.ReceiptHandle,
-          })
+          }),
         );
       } else {
         await sqsClient.send(
@@ -81,7 +81,7 @@ export const main = async (queueUrl: string = SQS_QUEUE_URL) => {
               Id: message.MessageId,
               ReceiptHandle: message.ReceiptHandle,
             })),
-          })
+          }),
         );
       }
     }

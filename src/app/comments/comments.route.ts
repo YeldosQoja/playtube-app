@@ -1,7 +1,7 @@
 import express from "express";
-import { validate } from "../../middlewares/validate.js";
-import { createCommentSchema } from "../../validators/comments/create-comment.schema.js";
-import { updateCommentSchema } from "../../validators/comments/update-comment.schema.js";
+import { validate } from "#middlewares/validate.js";
+import { createCommentSchema } from "#validators/comments/create-comment.schema.js";
+import { updateCommentSchema } from "#validators/comments/update-comment.schema.js";
 import {
   createCommentHandler,
   updateCommentHandler,

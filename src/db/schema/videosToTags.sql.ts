@@ -16,5 +16,5 @@ export const videosToTags = pgTable(
     cpk: primaryKey({
       columns: [table.video, table.tag],
     }),
-  })
+  }),
 );

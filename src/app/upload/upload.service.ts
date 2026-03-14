@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
-import { S3Service } from "../../services/aws/S3Service.js";
-import AppError from "../../utils/AppError.js";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
+import { S3Service } from "#services/aws/S3Service.js";
+import AppError from "#utils/AppError.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
 const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
 const s3Service = new S3Service({ forcePathStyle: forcePathStyle === "true" });

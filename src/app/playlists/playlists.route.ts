@@ -1,12 +1,12 @@
 import express from "express";
-import { validate } from "../../middlewares/validate.js";
-import { createPlaylistSchema } from "../../validators/playlists/create-playlist.schema.js";
-import { listPlaylistsSchema } from "../../validators/playlists/list-playlists.schema.js";
-import { getPlaylistSchema } from "../../validators/playlists/get-playlist.schema.js";
-import { updatePlaylistSchema } from "../../validators/playlists/update-playlist.schema.js";
-import { deletePlaylistSchema } from "../../validators/playlists/delete-playlist.schema.js";
-import { addVideoToPlaylistSchema } from "../../validators/playlists/add-video.schema.js";
-import { removeVideoFromPlaylistSchema } from "../../validators/playlists/remove-video.schema.js";
+import { validate } from "#middlewares/validate.js";
+import { createPlaylistSchema } from "#validators/playlists/create-playlist.schema.js";
+import { listPlaylistsSchema } from "#validators/playlists/list-playlists.schema.js";
+import { getPlaylistSchema } from "#validators/playlists/get-playlist.schema.js";
+import { updatePlaylistSchema } from "#validators/playlists/update-playlist.schema.js";
+import { deletePlaylistSchema } from "#validators/playlists/delete-playlist.schema.js";
+import { addVideoToPlaylistSchema } from "#validators/playlists/add-video.schema.js";
+import { removeVideoFromPlaylistSchema } from "#validators/playlists/remove-video.schema.js";
 import {
   addVideoToPlaylistHandler,
   createPlaylistHandler,

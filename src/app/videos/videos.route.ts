@@ -1,12 +1,12 @@
 import express from "express";
-import { validate } from "../../middlewares/validate.js";
-import { createDraftSchema } from "../../validators/videos/create-draft.schema.js";
-import { listVideosSchema } from "../../validators/videos/list-videos.schema.js";
-import { listVideoCategoriesSchema } from "../../validators/videos/list-categories.schema.js";
-import { saveVideoSchema } from "../../validators/videos/save-video.schema.js";
-import { getVideoCommentsSchema } from "../../validators/videos/get-video-comments.schema.js";
-import { deleteVideoSchema } from "../../validators/videos/delete-video.schema.js";
-import { getVideoSchema } from "../../validators/videos/get-video.schema.js";
+import { validate } from "#middlewares/validate.js";
+import { createDraftSchema } from "#validators/videos/create-draft.schema.js";
+import { listVideosSchema } from "#validators/videos/list-videos.schema.js";
+import { listVideoCategoriesSchema } from "#validators/videos/list-categories.schema.js";
+import { saveVideoSchema } from "#validators/videos/save-video.schema.js";
+import { getVideoCommentsSchema } from "#validators/videos/get-video-comments.schema.js";
+import { deleteVideoSchema } from "#validators/videos/delete-video.schema.js";
+import { getVideoSchema } from "#validators/videos/get-video.schema.js";
 import {
   createDraftHandler,
   deleteVideoHandler,

@@ -1,8 +1,18 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpStatusCode } from "../utils/HttpStatusCode.js";
-import AppError from "../utils/AppError.js";
-import { errorHandler } from "../errorHandler.js";
-import logger from "../logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import AppError from "#utils/AppError.js";
+import logger from "#lib/logger.js";
+
+class ErrorHandler {
+  async handle(error: AppError, res: Response) {
+    logger.error(error, error.message);
+    res.status(error.statusCode).send({
+      error: error.message,
+    });
+  }
+}
+
+export const errorHandler = new ErrorHandler();
 
 export const handleError = async (
   err: unknown,

@@ -1,6 +1,6 @@
 import z from "zod";
 import { createUpdateSchema } from "drizzle-zod";
-import { videos } from "../../db/schema/videos.sql.js";
+import { videos } from "#db/schema/videos.sql.js";
 
 const empty = z.object({});
 

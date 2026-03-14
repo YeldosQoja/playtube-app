@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import {
   createDraft,
   deleteVideoByKey,
@@ -32,7 +32,7 @@ export const saveVideoHandler: RequestHandler = async (req, res) => {
   const { videoKey } = req.params;
   const { playlist, tags, ...rest } = req.body;
 
-  await saveVideo(videoKey, rest, playlist, tags);
+  await saveVideo(videoKey as string, rest, playlist, tags);
 
   res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
 };
@@ -42,7 +42,7 @@ export const getVideoCommentsHandler: RequestHandler = async (req, res) => {
   const limit = Number(req.query["limit"]);
   const offset = Number(req.query["offset"] ?? 0);
 
-  const comments = await getVideoComments(videoKey, limit, offset);
+  const comments = await getVideoComments(videoKey as string, limit, offset);
 
   res.status(HttpStatusCode.OK).send({
     msg: "Comments retrieved.",
@@ -53,7 +53,7 @@ export const getVideoCommentsHandler: RequestHandler = async (req, res) => {
 export const deleteVideoHandler: RequestHandler = async (req, res) => {
   const { videoKey } = req.params;
 
-  const video = await getVideoByKey(videoKey);
+  const video = await getVideoByKey(videoKey as string);
 
   if (video.author !== req.user!.id) {
     res
@@ -62,7 +62,7 @@ export const deleteVideoHandler: RequestHandler = async (req, res) => {
     return;
   }
 
-  await deleteVideoByKey(videoKey);
+  await deleteVideoByKey(videoKey as string);
 
   res.status(HttpStatusCode.OK).send({ msg: "video deleted successfully." });
 };
@@ -70,7 +70,7 @@ export const deleteVideoHandler: RequestHandler = async (req, res) => {
 export const getVideoHandler: RequestHandler = async (req, res) => {
   const { videoKey } = req.params;
 
-  const data = await getVideoDetails(req.user!.username, videoKey);
+  const data = await getVideoDetails(req.user!.username, videoKey as string);
 
   res.status(HttpStatusCode.OK).send({ data });
 };

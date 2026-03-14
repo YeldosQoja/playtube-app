@@ -1,8 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpStatusCode } from "../utils/HttpStatusCode.js";
-import AppError from "../utils/AppError.js";
-import { errorHandler } from "../errorHandler.js";
-import logger from "../logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import AppError from "#utils/AppError.js";
+import { errorHandler } from "#middlewares/handle-error.js";
+import logger from "#lib/logger.js";
 
 export const ensureAuthenticated = (
   req: Request,

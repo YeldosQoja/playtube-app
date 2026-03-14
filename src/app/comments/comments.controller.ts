@@ -1,6 +1,9 @@
 import type { RequestHandler } from "express";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
-import { createCommentForVideo, updateCommentById } from "./comments.service.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import {
+  createCommentForVideo,
+  updateCommentById,
+} from "./comments.service.js";
 
 export const createCommentHandler: RequestHandler = async (req, res) => {
   const { videoPublicKey, text, parentId } = req.body;

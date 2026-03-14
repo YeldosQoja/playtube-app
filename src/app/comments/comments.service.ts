@@ -1,4 +1,4 @@
-import { createComment, findVideoByKey, updateComment } from "../../db/queries.js";
+import { createComment, findVideoByKey, updateComment } from "#db/queries.js";
 
 export async function createCommentForVideo(data: {
   authorId: number;

@@ -20,5 +20,5 @@ export const videosToPlaylists = pgTable(
     cpk: primaryKey({
       columns: [table.video, table.playlist],
     }),
-  })
+  }),
 );

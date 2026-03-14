@@ -1,10 +1,4 @@
-import {
-  foreignKey,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { users } from "./users.sql.js";
 import { videos } from "./videos.sql.js";
@@ -20,7 +14,7 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   parentComment: integer("parent_comment").references(
     (): AnyPgColumn => comments.id,
-    { onDelete: "cascade" }
+    { onDelete: "cascade" },
   ),
   createdAt: timestamp("created_at", {
     withTimezone: true,

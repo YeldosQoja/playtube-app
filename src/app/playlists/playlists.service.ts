@@ -7,7 +7,7 @@ import {
   getPlaylistsByAuthor,
   removeVideoFromPlaylist,
   updatePlaylist,
-} from "../../db/queries.js";
+} from "#db/queries.js";
 
 export async function createPlaylistForUser(
   authorId: number,

@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import {
   addVideo,
   createPlaylistForUser,

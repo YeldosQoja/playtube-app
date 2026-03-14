@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpStatusCode } from "../utils/HttpStatusCode.js";
-import logger from "../logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import logger from "#lib/logger.js";
 
 export const isAuthenticated = (
   req: Request,

@@ -1,13 +1,13 @@
 import { and, countDistinct, eq, inArray, sql } from "drizzle-orm";
-import { db } from "./index.js";
-import { videos } from "./schema/videos.sql.js";
-import { comments } from "./schema/comments.sql.js";
-import { users } from "./schema/users.sql.js";
-import { tags } from "./schema/tags.sql.js";
-import { videosToPlaylists } from "./schema/videosToPlaylists.sql.js";
-import { videosToTags } from "./schema/videosToTags.sql.js";
-import { categories } from "./schema/categories.sql.js";
-import { playlists } from "./schema/playlists.sql.js";
+import { db } from "#db/index.js";
+import { videos } from "#db/schema/videos.sql.js";
+import { comments } from "#db/schema/comments.sql.js";
+import { users } from "#db/schema/users.sql.js";
+import { tags } from "#db/schema/tags.sql.js";
+import { videosToPlaylists } from "#db/schema/videosToPlaylists.sql.js";
+import { videosToTags } from "#db/schema/videosToTags.sql.js";
+import { categories } from "#db/schema/categories.sql.js";
+import { playlists } from "#db/schema/playlists.sql.js";
 
 export async function findVideoByKey(key: string) {
   const video = await db.query.videos.findFirst({

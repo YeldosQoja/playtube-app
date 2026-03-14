@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { CloudFrontService } from "../../services/aws/CloudFrontService.js";
+import { CloudFrontService } from "#services/aws/CloudFrontService.js";
 import {
   createVideoDraft,
   deleteVideo,
@@ -8,8 +8,8 @@ import {
   getUploadedVideos,
   getVideoCategories,
   updateVideo,
-} from "../../db/queries.js";
-import { videos } from "../../db/schema/videos.sql.js";
+} from "#db/queries.js";
+import { videos } from "#db/schema/videos.sql.js";
 
 const cloudFrontService = new CloudFrontService();
 

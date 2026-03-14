@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import passport from "passport";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
-import logger from "../../logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import logger from "#lib/logger.js";
 import { getUserProfile, registerUser } from "./auth.service.js";
 
 export const signIn: RequestHandler = (req, res, next) => {

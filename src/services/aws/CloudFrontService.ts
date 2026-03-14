@@ -1,5 +1,5 @@
 import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
-import { getAwsConfig } from "../../config/aws.js";
+import { getAwsConfig } from "#config/aws.js";
 import {
   GetSecretValueCommand,
   SecretsManagerClient,

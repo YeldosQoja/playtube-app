@@ -18,8 +18,8 @@
 
     /* Modules */
     "module": "nodenext",                                /* Specify what module code is generated. */
+    "moduleResolution": "nodenext",
     // "rootDir": "src",                                  /* Specify the root folder within your source files. */
-    "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     "resolveJsonModule": true,                        /* Enable importing .json files. */
     "allowArbitraryExtensions": true,                 /* Enable importing files with any extension, provided a declaration file is present. */
     /* Emit */
@@ -46,6 +46,17 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
     "types": ["node", "express"],
+    "baseUrl": "./src",
+    "paths": {
+      "#app/*": ["app/*"],
+      "#config/*": ["config/*"],
+      "#db/*": ["db/*"],
+      "#lib/*": ["lib/*"],
+      "#middlewares/*": ["middlewares/*"],
+      "#utils/*": ["utils/*"],
+      "#services/*": ["services/*"],
+      "#validators/*": ["validators/*"]
+    },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
   },
   "include": ["src/**/*"]
 }

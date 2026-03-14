@@ -1,4 +1,4 @@
-import { HttpStatusCode } from "./HttpStatusCode.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
 class AppError extends Error {
     public readonly statusCode: HttpStatusCode;

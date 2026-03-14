@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
-import logger from "../../logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import logger from "#lib/logger.js";
 import {
   abortMultipartUpload,
   completeMultipartUpload,

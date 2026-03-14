@@ -2,10 +2,10 @@ import crypto from "node:crypto";
 import { promisify } from "node:util";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { HttpStatusCode } from "../../utils/HttpStatusCode.js";
-import AppError from "../../utils/AppError.js";
-import logger from "../../logger.js";
-import { findUserByUsername, findUserById, createUser } from "../../db/queries.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import AppError from "#utils/AppError.js";
+import logger from "#lib/logger.js";
+import { findUserByUsername, findUserById, createUser } from "#db/queries.js";
 
 const pbkdf2Async = promisify(crypto.pbkdf2);
 const ITERATIONS = 310000;

@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { Request, Response, NextFunction } from "express";
 import z from "zod";
-import AppError from "../utils/AppError.js";
-import { HttpStatusCode } from "../utils/HttpStatusCode.js";
+import AppError from "#utils/AppError.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
 type RequestSchema = z.ZodType<{
   query: z.ZodObject;

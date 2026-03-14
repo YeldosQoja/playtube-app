@@ -1,16 +1,18 @@
-// @ts-nocheck
 import { Request, Response, NextFunction } from "express";
-import z from "zod";
+import z, { ZodObject, ZodType } from "zod";
 import AppError from "#utils/AppError.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
-type RequestSchema = z.ZodType<{
-  query: z.ZodObject;
-  body: z.ZodObject;
-  params: z.ZodObject;
+type AnyRequestSchema = ZodObject<{
+  body: ZodObject<{ [key: string]: ZodType }>;
+  params: ZodObject<{ [key: string]: ZodType }>;
+  query: ZodObject<{ [key: string]: ZodType }>;
 }>;
 
-export function validate(schema: RequestSchema) {
+type ParsedQs = Request["query"];
+type Params = Request["params"];
+
+export function validate(schema: AnyRequestSchema) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { query, body, params } = req;
@@ -20,9 +22,9 @@ export function validate(schema: RequestSchema) {
         params,
       });
 
-      req.query = result.query;
+      req.query = result.query as ParsedQs;
       req.body = result.body;
-      req.params = result.params;
+      req.params = result.params as Params;
 
       next();
     } catch (error) {

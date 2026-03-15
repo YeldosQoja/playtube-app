@@ -62,6 +62,18 @@ app.use(
     credentials: true,
   }),
 );
+
+// a temporary solution to make query object mutable
+// will change by adding validatedQuery field to Request object and extending it using ts declarations
+app.use((req, res, next) => {
+  Object.defineProperty(req, "query", {
+    ...Object.getOwnPropertyDescriptor(req, "query"),
+    value: req.query,
+    writable: true,
+  });
+  next();
+});
+
 app.use("/auth", authRouter);
 app.use("/videos", isAuthenticated, videosRouter);
 app.use("/comments", isAuthenticated, commentsRouter);

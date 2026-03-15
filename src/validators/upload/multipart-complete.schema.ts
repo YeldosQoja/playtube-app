@@ -11,7 +11,6 @@ export const multipartCompleteSchema = z.object({
   body: z.object({
     uploadId: z.string().min(1),
     key: z.string().min(1),
-    contentType: z.string().min(1),
     parts: z.array(completedPartSchema).min(1),
   }),
   params: empty,

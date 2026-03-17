@@ -4,6 +4,7 @@ import {
   GetSecretValueCommand,
   SecretsManagerClient,
 } from "@aws-sdk/client-secrets-manager";
+import logger from "#lib/logger.js";
 
 const secretsManagerClient = new SecretsManagerClient();
 
@@ -22,6 +23,11 @@ export class CloudFrontService {
         SecretId: secretName,
       }),
     );
+
+    logger.debug({
+      url: `${baseUrl}/${username}/${storageKey}/output.m3u8`,
+      secret: output.SecretString,
+    });
 
     const url = getSignedUrl({
       url: `${baseUrl}/${username}/${storageKey}/output.m3u8`,

@@ -1,19 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import z, { ZodObject, ZodType } from "zod";
+import z, { ZodObject, ZodOptional, ZodType } from "zod";
 import AppError from "#utils/AppError.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import logger from "#lib/logger.js";
 
-type AnyRequestSchema = ZodObject<{
-  body: ZodObject<{ [key: string]: ZodType }>;
-  params: ZodObject<{ [key: string]: ZodType }>;
-  query: ZodObject<{ [key: string]: ZodType }>;
+type RequestSchema = ZodObject<{
+  body: ZodObject<{ [key: string]: ZodType }> | ZodOptional;
+  params: ZodObject<{ [key: string]: ZodType }> | ZodOptional;
+  query: ZodObject<{ [key: string]: ZodType }> | ZodOptional;
 }>;
 
 type ParsedQs = Request["query"];
 type Params = Request["params"];
 
-export function validate(schema: AnyRequestSchema) {
+export function validate(schema: RequestSchema) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { query, body, params } = req;

@@ -10,6 +10,7 @@ import {
   updateVideo,
 } from "#db/queries.js";
 import { videos } from "#db/schema/videos.sql.js";
+import logger from "#lib/logger.js";
 
 const cloudFrontService = new CloudFrontService();
 
@@ -30,8 +31,20 @@ export async function createDraft(authorId: number, title: string) {
   return { key: videoKey };
 }
 
-export async function listUploadedVideos() {
-  return await getUploadedVideos();
+export async function listUploadedVideos(username: string) {
+  const res = await getUploadedVideos();
+  const videos = await Promise.all(
+    res.map(async (data) => {
+      const { thumbnailKey, ...rest } = data;
+      const thumbnailUrl = await cloudFrontService.generateSignedUrl(
+        username,
+        data.thumbnailKey!,
+        Date.now() + 3600,
+      );
+      return { thumbnailUrl, ...rest };
+    }),
+  );
+  return videos;
 }
 
 export async function listVideoCategories() {
@@ -88,6 +101,11 @@ export async function getVideoDetails(username: string, videoKey: string) {
     videoUrlPromise,
     thumbnailUrlPromise,
   ]);
+
+  logger.info(
+    { videoUrl, thumbnailUrl },
+    "Video and thumbnail urls generated.",
+  );
 
   const data: Omit<typeof video, "tags" | "key" | "thumbnailKey"> & {
     tags: { id: number; name: string }[];

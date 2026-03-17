@@ -19,7 +19,7 @@ export const createDraftHandler: RequestHandler = async (req, res) => {
 };
 
 export const listVideosHandler: RequestHandler = async (req, res) => {
-  const videos = await listUploadedVideos();
+  const videos = await listUploadedVideos(req.user!.username);
   res.status(HttpStatusCode.OK).send({ videos });
 };
 

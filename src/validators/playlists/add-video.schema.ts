@@ -1,6 +1,6 @@
 import z from "zod";
 
-const empty = z.object({});
+const empty = z.object({}).optional();
 
 export const addVideoToPlaylistSchema = z.object({
   body: empty,

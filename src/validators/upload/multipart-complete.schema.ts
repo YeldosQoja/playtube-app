@@ -1,6 +1,6 @@
 import z from "zod";
 
-const empty = z.object({});
+const empty = z.object({}).optional();
 
 const completedPartSchema = z.object({
   ETag: z.string().min(1),

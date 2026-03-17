@@ -19,8 +19,6 @@ import { pinoHttp } from "pino-http";
 export const app = express();
 dotenv.config();
 
-// For cloud front private key
-fs.writeFileSync("/tmp/private_key.pem", process.env["CDN_PRIVATE_KEY"] || "");
 const port = process.env["PORT"];
 const sessionSecret = process.env["SESSION_SECRET"] as string;
 const userSessionsTable = process.env["SESSION_TABLE"] || "user_sessions";

@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const getVideoCommentsSchema = z.object({
-  body: z.object({}),
+  body: z.object({}).optional(),
   params: z.object({
     videoKey: z.string().min(1),
   }),

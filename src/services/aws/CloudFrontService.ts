@@ -11,7 +11,7 @@ export class CloudFrontService {
   async generateSignedUrl(
     username: string,
     storageKey: string,
-    expirationDate: number | string | Date
+    expirationDate: number | string | Date,
   ) {
     const {
       cloudFront: { baseUrl, keyGroupId, secretName },
@@ -20,11 +20,11 @@ export class CloudFrontService {
     const output = await secretsManagerClient.send(
       new GetSecretValueCommand({
         SecretId: secretName,
-      })
+      }),
     );
 
     const url = getSignedUrl({
-      url: `${baseUrl}/outputs/${username}/${storageKey}/output.m3u8`,
+      url: `${baseUrl}/${username}/${storageKey}/output.m3u8`,
       keyPairId: keyGroupId,
       privateKey: output.SecretString!,
       dateLessThan: expirationDate, // Video will be available for the next hour

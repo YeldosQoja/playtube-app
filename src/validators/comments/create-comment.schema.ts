@@ -1,6 +1,6 @@
 import z from "zod";
 
-const empty = z.object({});
+const empty = z.object({}).optional();
 
 export const createCommentSchema = z.object({
   body: z.object({

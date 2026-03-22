@@ -1,6 +1,4 @@
 import express from "express";
-import fs from "fs";
-import dotenv from "dotenv";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "#db/index.js";
@@ -17,7 +15,6 @@ import logger from "#lib/logger.js";
 import { pinoHttp } from "pino-http";
 
 export const app = express();
-dotenv.config();
 
 const port = process.env["PORT"];
 const sessionSecret = process.env["SESSION_SECRET"] as string;

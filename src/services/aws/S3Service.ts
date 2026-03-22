@@ -32,7 +32,7 @@ export class S3Service extends AwsService<
     this.bucketName = awsConfig.s3.bucketName;
   }
 
-  createSimpleUpload(key: string, contentType: string) {
+  createSimpleUpload(key: string, contentType?: string) {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,

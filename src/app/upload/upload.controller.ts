@@ -10,7 +10,10 @@ import {
 
 export const createSimpleUploadHandler: RequestHandler = async (req, res) => {
   const { contentType } = req.body;
-  const { url, key } = await createSimpleUpload(contentType);
+  const { url, key } = await createSimpleUpload(
+    req.user!.username,
+    contentType,
+  );
 
   logger.info("Signed upload url created.");
   res.status(HttpStatusCode.OK).send({

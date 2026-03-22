@@ -7,9 +7,13 @@ const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
 const s3Service = new S3Service({ forcePathStyle: forcePathStyle === "true" });
 const PART_SIZE = 20_000_000;
 
-export async function createSimpleUpload(contentType: string) {
+export async function createSimpleUpload(
+  username: string,
+  contentType?: string,
+) {
   const key = nanoid();
-  const command = s3Service.createSimpleUpload(key, contentType);
+  const fullKey = `uploads/${username}/thumbnails/${key}`;
+  const command = s3Service.createSimpleUpload(fullKey, contentType);
   const url = await s3Service.getSignedUrl(command);
 
   return { key, url };

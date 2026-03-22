@@ -47,7 +47,6 @@ export async function findVideoByKey(key: string) {
 
 export async function getUploadedVideos() {
   return await db.query.videos.findMany({
-    where: ({ status }, { eq }) => eq(status, "UPLOADED"),
     with: {
       author: {
         columns: {

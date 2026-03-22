@@ -36,9 +36,9 @@ export async function listUploadedVideos(username: string) {
   const videos = await Promise.all(
     res.map(async (data) => {
       const { thumbnailKey, ...rest } = data;
+      const thumbnailPath = `uploads/${username}/thumbnails/${thumbnailKey}`;
       const thumbnailUrl = await cloudFrontService.generateSignedUrl(
-        username,
-        data.thumbnailKey!,
+        thumbnailPath,
         Date.now() + 3600,
       );
       return { thumbnailUrl, ...rest };
@@ -86,14 +86,15 @@ export async function getVideoDetails(username: string, videoKey: string) {
   const video = await findVideoByKey(videoKey);
   const { key, thumbnailKey, tags, ...rest } = video;
 
+  const playlistPath = `outputs/${username}/${key}/output.m3u8`;
+  const thumbnailPath = `uploads/${username}/thumbnails/${key}`;
+
   const videoUrlPromise = cloudFrontService.generateSignedUrl(
-    username,
-    key,
+    playlistPath,
     Date.now() + 3600,
   );
   const thumbnailUrlPromise = cloudFrontService.generateSignedUrl(
-    username,
-    thumbnailKey!,
+    thumbnailPath,
     Date.now() + 3600,
   );
 

@@ -10,8 +10,7 @@ const secretsManagerClient = new SecretsManagerClient();
 
 export class CloudFrontService {
   async generateSignedUrl(
-    username: string,
-    storageKey: string,
+    path: string,
     expirationDate: number | string | Date,
   ) {
     const {
@@ -25,15 +24,15 @@ export class CloudFrontService {
     );
 
     logger.debug({
-      url: `${baseUrl}/${username}/${storageKey}/output.m3u8`,
+      url: `${baseUrl}/${path}`,
       secret: output.SecretString,
     });
 
     const url = getSignedUrl({
-      url: `${baseUrl}/${username}/${storageKey}/output.m3u8`,
+      url: `${baseUrl}/${path}`,
       keyPairId: keyGroupId,
       privateKey: output.SecretString!,
-      dateLessThan: expirationDate, // Video will be available for the next hour
+      dateLessThan: expirationDate,
     });
 
     return url;

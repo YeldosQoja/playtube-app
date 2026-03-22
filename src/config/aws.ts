@@ -9,6 +9,7 @@ export const getAwsConfig = () => ({
     role: process.env["MEDIACONVERT_ROLE"]!,
   },
   cloudFront: {
+    domain: process.env["CLOUDFRONT_DOMAIN"],
     baseUrl: process.env["S3_CDN"]!,
     keyGroupId: process.env["CDN_KEY_GROUP_ID"]!,
     secretName: process.env["CDN_SECRET_NAME"] || "PrivateKey",

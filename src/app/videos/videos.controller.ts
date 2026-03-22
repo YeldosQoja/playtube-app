@@ -10,6 +10,8 @@ import {
   listVideoCategories,
   saveVideo,
 } from "./videos.service.js";
+import { getAwsConfig } from "#config/aws.js";
+import logger from "#lib/logger.js";
 
 export const createDraftHandler: RequestHandler = async (req, res) => {
   const { title } = req.body;
@@ -70,7 +72,21 @@ export const deleteVideoHandler: RequestHandler = async (req, res) => {
 export const getVideoHandler: RequestHandler = async (req, res) => {
   const videoKey = req.params["videoKey"];
 
-  const data = await getVideoDetails(req.user!.username, videoKey as string);
+  const result = await getVideoDetails(req.user!.username, videoKey as string);
+
+  const { cookies, ...data } = result;
+
+  const {
+    cloudFront: { domain },
+  } = getAwsConfig();
+
+  // setting signed cookies to Set-Cookie header
+  Object.entries(cookies).forEach((val) => {
+    const [key, value] = val;
+    const cookie = `${key}=${value};Domain=${domain};Path=/outputs/${req.user?.username}/${videoKey}/;Secure;HttpOnly`;
+    logger.debug({ cookie }, "Cookie value");
+    res.setHeader("Set-Cookie", cookie);
+  });
 
   res.status(HttpStatusCode.OK).send({ data });
 };

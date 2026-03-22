@@ -1,4 +1,4 @@
-import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
+import { getSignedCookies, getSignedUrl } from "@aws-sdk/cloudfront-signer";
 import { getAwsConfig } from "#config/aws.js";
 import {
   GetSecretValueCommand,
@@ -25,7 +25,7 @@ export class CloudFrontService {
 
     logger.debug({
       url: `${baseUrl}/${path}`,
-      secret: output.SecretString,
+      secret: output.SecretBinary,
     });
 
     const url = getSignedUrl({
@@ -36,5 +36,34 @@ export class CloudFrontService {
     });
 
     return url;
+  }
+
+  async createSignedCookies(
+    path: string,
+    expirationDate: number | string | Date,
+  ) {
+    const {
+      cloudFront: { baseUrl, keyGroupId, secretName },
+    } = getAwsConfig();
+
+    const output = await secretsManagerClient.send(
+      new GetSecretValueCommand({
+        SecretId: secretName,
+      }),
+    );
+
+    logger.debug({
+      url: `${baseUrl}/${path}`,
+      secret: output.SecretString,
+    });
+
+    const cookies = getSignedCookies({
+      url: `${baseUrl}/${path}`,
+      keyPairId: keyGroupId,
+      privateKey: Buffer.from(output.SecretString!),
+      dateLessThan: expirationDate,
+    });
+
+    return cookies;
   }
 }

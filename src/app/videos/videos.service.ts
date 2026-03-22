@@ -11,6 +11,8 @@ import {
 } from "#db/queries.js";
 import { videos } from "#db/schema/videos.sql.js";
 import logger from "#lib/logger.js";
+import { CloudfrontSignedCookiesOutput } from "@aws-sdk/cloudfront-signer";
+import { getAwsConfig } from "#config/aws.js";
 
 const cloudFrontService = new CloudFrontService();
 
@@ -86,36 +88,32 @@ export async function getVideoDetails(username: string, videoKey: string) {
   const video = await findVideoByKey(videoKey);
   const { key, thumbnailKey, tags, ...rest } = video;
 
-  const playlistPath = `outputs/${username}/${key}/output.m3u8`;
-  const thumbnailPath = `uploads/${username}/thumbnails/${key}`;
+  const playlistPath = `outputs/${username}/${key}/*`;
 
-  const videoUrlPromise = cloudFrontService.generateSignedUrl(
+  const {
+    cloudFront: { baseUrl },
+  } = getAwsConfig();
+
+  const cookies = await cloudFrontService.createSignedCookies(
     playlistPath,
     Date.now() + 3600,
   );
-  const thumbnailUrlPromise = cloudFrontService.generateSignedUrl(
-    thumbnailPath,
-    Date.now() + 3600,
-  );
 
-  const [videoUrl, thumbnailUrl] = await Promise.all([
-    videoUrlPromise,
-    thumbnailUrlPromise,
-  ]);
+  const videoUrl = `${baseUrl}/outputs/${username}/${key}/output.m3u8`;
+  const thumbnailUrl = `${baseUrl}/uploads/${username}/thumbnails/${key}`;
 
-  logger.info(
-    { videoUrl, thumbnailUrl },
-    "Video and thumbnail urls generated.",
-  );
+  logger.info({ cookies, thumbnailUrl }, "Video and thumbnail urls generated.");
 
   const data: Omit<typeof video, "tags" | "key" | "thumbnailKey"> & {
     tags: { id: number; name: string }[];
+    cookies: CloudfrontSignedCookiesOutput;
     videoUrl: string;
     thumbnailUrl: string;
   } = {
     ...rest,
     videoUrl,
     thumbnailUrl,
+    cookies,
     tags: tags.map(({ tag }) => tag),
   };
 

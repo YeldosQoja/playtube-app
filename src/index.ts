@@ -5,6 +5,7 @@ import { pool } from "#db/index.js";
 import passport from "passport";
 import cors from "cors";
 import authRouter from "#app/auth/auth.route.js";
+import accountRouter from "#app/account/account.route.js";
 import videosRouter from "#app/videos/videos.route.js";
 import commentsRouter from "#app/comments/comments.route.js";
 import uploadRouter from "#app/upload/upload.route.js";
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/account", isAuthenticated, accountRouter);
 app.use("/videos", isAuthenticated, videosRouter);
 app.use("/comments", isAuthenticated, commentsRouter);
 app.use("/upload", isAuthenticated, uploadRouter);

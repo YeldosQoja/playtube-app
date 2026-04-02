@@ -9,8 +9,6 @@ import { configurePassport } from "./auth.service.js";
 
 const router = express.Router();
 
-configurePassport();
-
 router.post("/signin", validate(signInSchema), signIn);
 router.post("/signup", validate(signUpSchema), signUp);
 router.get("/me", isAuthenticated, validate(meSchema), getMe);

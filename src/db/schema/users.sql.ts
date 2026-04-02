@@ -12,5 +12,5 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", {
     mode: "string",
     withTimezone: true,
-  }),
+  }).notNull(),
 });

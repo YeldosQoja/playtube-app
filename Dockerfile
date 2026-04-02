@@ -1,4 +1,4 @@
-FROM node:20.19.4 AS builder
+FROM node:lts-krypton AS builder
 WORKDIR /app
 
 COPY package-lock.json package.json ./
@@ -7,7 +7,7 @@ RUN npm ci --cache .npm
 COPY . .
 RUN npm run build
 
-FROM node:20.19.4 AS deploy
+FROM node:lts-krypton AS deploy
 WORKDIR /app
 
 COPY --from=builder /app/ /app/

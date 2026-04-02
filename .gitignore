@@ -4,3 +4,5 @@ dist/
 .vscode/
 assets/
 private_key.pem
+
+compose*.yaml

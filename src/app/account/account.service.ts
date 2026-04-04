@@ -1,4 +1,4 @@
-import { IAccountRepository } from "./account.model.js";
+import { IAccountRepository } from "#core/account/account.repository.js";
 
 export class AccountService {
   private repository: IAccountRepository;

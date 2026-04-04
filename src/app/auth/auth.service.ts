@@ -6,9 +6,10 @@ import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import AppError from "#utils/AppError.js";
 import logger from "#lib/logger.js";
 import { findUserByUsername, findUserById, createUser } from "#db/queries.js";
+import { Credentials, IAuthStrategy } from "#core/auth/auth.strategy.js";
 
 const pbkdf2Async = promisify(crypto.pbkdf2);
-const ITERATIONS = 310000;
+const ITERATIONS = parseInt(process.env["ITERATIONS"] || "100000");
 let passportConfigured = false;
 
 export function configurePassport() {
@@ -113,4 +114,31 @@ export async function getUserProfile(userId: number) {
     lastName: user.lastName,
     createdAt: user.createdAt,
   };
+}
+
+export class AuthService {
+  private strategies = new Map<string, IAuthStrategy>();
+
+  register(name: string, strategy: IAuthStrategy) {
+    this.strategies.set(name, strategy);
+    return this;
+  }
+
+  private get(name: string): IAuthStrategy {
+    const strategy = this.strategies.get(name);
+    if (!strategy) throw new Error(`Unknown auth strategy: ${name}`);
+    return strategy;
+  }
+
+  async authenticate(strategy: string, credentials: Credentials) {
+    return this.get(strategy).authenticate(credentials);
+  }
+
+  async revoke(strategy: string, token: string) {
+    return this.get(strategy).revoke(token);
+  }
+
+  async refresh(strategy: string, token: string) {
+    return this.get(strategy).refresh(token);
+  }
 }

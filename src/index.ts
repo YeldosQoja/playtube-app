@@ -1,6 +1,7 @@
 import express from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+import logger from "#lib/logger.js";
 import { pool } from "#db/index.js";
 import passport from "passport";
 import cors from "cors";
@@ -12,7 +13,6 @@ import uploadRouter from "#app/upload/upload.route.js";
 import playlistsRouter from "#app/playlists/playlists.route.js";
 import { isAuthenticated } from "#middlewares/is-authenticated.js";
 import { handleError } from "#middlewares/handle-error.js";
-import logger from "#lib/logger.js";
 import { pinoHttp } from "pino-http";
 
 export const app = express();

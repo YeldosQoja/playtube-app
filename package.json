@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "imports": {
+    "#core/*.js": "./dist/core/*.js",
     "#app/*.js": "./dist/app/*.js",
     "#config/*.js": "./dist/config/*.js",
     "#db/*.js": "./dist/db/*.js",

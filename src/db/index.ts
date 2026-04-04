@@ -1,12 +1,13 @@
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
+import * as accountsSchema from "#db/schema/accounts.sql.js";
 import * as categoriesSchema from "#db/schema/categories.sql.js";
 import * as commentsSchema from "#db/schema/comments.sql.js";
 import * as playlistsSchema from "#db/schema/playlists.sql.js";
 import * as relationsSchema from "#db/schema/relations.js";
 import * as tagsSchema from "#db/schema/tags.sql.js";
-import * as usersSchema from "#db/schema/users.sql.js";
+import * as authUsersSchema from "#db/schema/auth-users.sql.js";
 import * as videosSchema from "#db/schema/videos.sql.js";
 import * as videosToPlaylistsSchema from "#db/schema/videosToPlaylists.sql.js";
 import * as videosToTagsSchema from "#db/schema/videosToTags.sql.js";
@@ -29,12 +30,13 @@ export const pool = new pg.Pool({
 
 export const db = drizzle(pool, {
   schema: {
+    ...accountsSchema,
     ...categoriesSchema,
     ...commentsSchema,
     ...playlistsSchema,
     ...relationsSchema,
     ...tagsSchema,
-    ...usersSchema,
+    ...authUsersSchema,
     ...videosSchema,
     ...videosToPlaylistsSchema,
     ...videosToTagsSchema,

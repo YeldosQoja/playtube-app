@@ -1,5 +1,5 @@
 import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { users } from "./users.sql.js";
+import { accounts } from "./accounts.sql.js";
 
 export const playlists = pgTable("playlists", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey().unique(),
@@ -11,7 +11,7 @@ export const playlists = pgTable("playlists", {
     .unique()
     .notNull(),
   author: integer("author")
-    .references(() => users.id, { onDelete: "cascade" })
+    .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: timestamp("created_at", {
     mode: "string",

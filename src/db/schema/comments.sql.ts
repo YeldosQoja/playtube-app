@@ -1,12 +1,12 @@
 import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { users } from "./users.sql.js";
 import { videos } from "./videos.sql.js";
+import { accounts } from "./accounts.sql.js";
 
 export const comments = pgTable("comments", {
   id: integer("id").unique().generatedAlwaysAsIdentity().primaryKey(),
   author: integer("author")
-    .references(() => users.id, { onDelete: "cascade" })
+    .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
   video: integer("video")
     .references(() => videos.id, { onDelete: "cascade" })

@@ -1,5 +1,4 @@
 import { relations } from "drizzle-orm";
-import { users } from "./users.sql.js";
 import { videos } from "./videos.sql.js";
 import { videosToPlaylists } from "./videosToPlaylists.sql.js";
 import { playlists } from "./playlists.sql.js";
@@ -7,15 +6,16 @@ import { comments } from "./comments.sql.js";
 import { videosToTags } from "./videosToTags.sql.js";
 import { tags } from "./tags.sql.js";
 import { categories } from "./categories.sql.js";
+import { accounts } from "./accounts.sql.js";
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const accountsRelations = relations(accounts, ({ many }) => ({
   videos: many(videos),
 }));
 
 export const videosRelations = relations(videos, ({ many, one }) => ({
-  author: one(users, {
+  author: one(accounts, {
     fields: [videos.author],
-    references: [users.id],
+    references: [accounts.id],
   }),
   category: one(categories, {
     fields: [videos.category],

@@ -7,15 +7,15 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { users } from "./users.sql.js";
 import { categories } from "./categories.sql.js";
+import { accounts } from "./accounts.sql.js";
 
 export const privacyEnum = pgEnum("privacy", ["public", "private", "unlisted"]);
 
 export const videos = pgTable("videos", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity().unique(),
   author: integer("author")
-    .references(() => users.id, { onDelete: "cascade" })
+    .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
   key: varchar("key", { length: 60 }).unique().notNull(),
   thumbnailKey: varchar("thumbnail_key", {

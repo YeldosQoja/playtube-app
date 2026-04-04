@@ -2,8 +2,8 @@ export interface Account {
   id: number;
   firstName: string;
   lastName: string;
+  email?: string | null;
   username: string;
-  email: string | null;
 }
 
 export interface IAccountRepository {
@@ -11,7 +11,8 @@ export interface IAccountRepository {
     firstName: string,
     lastName: string,
     username: string,
-    email: string | null,
+    authUserId: number,
+    email?: string,
   ): Promise<Account>;
   getAccountById(accountId: number): Promise<Account>;
 }

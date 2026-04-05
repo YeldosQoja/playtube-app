@@ -1,8 +1,61 @@
 import type { RequestHandler } from "express";
 import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import logger from "#lib/logger.js";
-import { getUserProfile, registerUser } from "./auth.service.js";
+import { AuthService } from "./auth.service.js";
+import { repository as accountRepository } from "#lib/data/account.repository.js";
+import { SessionStrategy } from "#lib/auth/session-strategy.js";
+import { authUserRepository } from "#lib/data/auth.repository.js";
+
+const authService = new AuthService(accountRepository).addStrategy(
+  "session",
+  new SessionStrategy(authUserRepository),
+);
+
+let passportConfigured = false;
+
+export function configurePassport() {
+  if (passportConfigured) {
+    return;
+  }
+
+  passport.use(
+    new LocalStrategy(async (username, password, cb) => {
+      try {
+        const user = await authService.authenticate("session", {
+          username,
+          password,
+        });
+        return cb(null, user);
+      } catch (err) {
+        return cb(err, false);
+      }
+    }),
+  );
+
+  passport.serializeUser((user, cb) => {
+    process.nextTick(() => {
+      cb(null, user.username);
+    });
+  });
+
+  passport.deserializeUser((username: string, cb) => {
+    process.nextTick(async () => {
+      try {
+        const user = await authUserRepository.getByUsername(username);
+        cb(null, user);
+      } catch (err) {
+        logger.info(
+          "Invalid cookies provided. Unable to authenticate the request.",
+        );
+        cb(err, null);
+      }
+    });
+  });
+
+  passportConfigured = true;
+}
 
 export const signIn: RequestHandler = (req, res, next) => {
   passport.authenticate(
@@ -26,7 +79,7 @@ export const signIn: RequestHandler = (req, res, next) => {
 export const signUp: RequestHandler = async (req, res, next) => {
   const { firstName, lastName, username, email, password } = req.body;
 
-  const user = await registerUser({
+  const user = await authService.register("session", {
     firstName,
     lastName,
     username,
@@ -43,9 +96,4 @@ export const signUp: RequestHandler = async (req, res, next) => {
       .status(HttpStatusCode.OK)
       .json({ user, msg: "Account created successfully." });
   });
-};
-
-export const getMe: RequestHandler = async (req, res) => {
-  const profile = await getUserProfile(req.user!.id);
-  res.status(HttpStatusCode.OK).json(profile);
 };

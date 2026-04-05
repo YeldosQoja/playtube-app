@@ -11,12 +11,14 @@ export class AccountService {
     firstName: string,
     lastName: string,
     username: string,
-    email: string | null,
+    authUserId: number,
+    email?: string,
   ) {
     const newAccount = await this.repository.createAccount(
       firstName,
       lastName,
       username,
+      authUserId,
       email,
     );
     return newAccount;

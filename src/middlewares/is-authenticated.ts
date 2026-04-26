@@ -11,5 +11,5 @@ export const isAuthenticated = (
     return next();
   }
   logger.error("Unauthorized.");
-  res.status(HttpStatusCode.UNAUTHORIZED).json({ msg: "Unauthorized" });
+  res.status(HttpStatusCode.UNAUTHORIZED).send({ msg: "Unauthorized" });
 };

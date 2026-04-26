@@ -1,5 +1,6 @@
 import { Credentials, IAuthStrategy } from "#core/auth/auth.strategy.js";
 import { IAccountRepository } from "#core/account/account.repository.js";
+import logger from "#lib/logger.js";
 
 export class AuthService {
   private strategies = new Map<string, IAuthStrategy>();
@@ -15,6 +16,7 @@ export class AuthService {
   }
 
   private get(name: string): IAuthStrategy {
+    logger.debug({ name }, "AuthService.get(strategy)");
     const strategy = this.strategies.get(name);
     if (!strategy) throw new Error(`Unknown auth strategy: ${name}`);
     return strategy;

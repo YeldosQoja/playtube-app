@@ -1,11 +1,14 @@
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { AccountService } from "./account.service.js";
-import { repository } from "#lib/data/account.repository.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
-const accountService = new AccountService(repository);
+export function createAccountController(accountService: AccountService) {
+  return {
+    getProfile: (async (req, res) => {
+      const profile = await accountService.getAccountById(req.user!.id);
+      res.status(HttpStatusCode.OK).send({ profile });
+    }) satisfies RequestHandler,
+  };
+}
 
-export const getProfile: RequestHandler = async (req, res) => {
-  const profile = await accountService.getAccountById(req.user!.id);
-  res.status(HttpStatusCode.OK).send({ profile });
-};
+export type AccountController = ReturnType<typeof createAccountController>;

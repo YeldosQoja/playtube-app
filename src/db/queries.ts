@@ -16,8 +16,6 @@ export async function findVideoByKey(key: string) {
       author: {
         columns: {
           id: false,
-          password: false,
-          salt: false,
           createdAt: false,
           email: false,
         },
@@ -51,8 +49,6 @@ export async function getUploadedVideos() {
       author: {
         columns: {
           id: false,
-          password: false,
-          salt: false,
           createdAt: false,
           email: false,
         },
@@ -269,7 +265,7 @@ export async function createUser(
 ) {
   const result = await db
     .insert(authUsers)
-    .values(data)
+    .values({ ...data, createdAt: new Date().toISOString() })
     .returning({ id: authUsers.id, username: authUsers.username });
   return result[0];
 }
@@ -312,8 +308,6 @@ export async function findPlaylistById(id: number) {
               author: {
                 columns: {
                   id: false,
-                  password: false,
-                  salt: false,
                   createdAt: false,
                   email: false,
                 },

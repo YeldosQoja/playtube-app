@@ -1,10 +1,16 @@
 import express from "express";
 import { validate } from "#middlewares/validate.js";
-import { getProfile } from "./account.controller.js";
 import { profileSchema } from "#validators/account/get-profile.schema.js";
+import { AccountController } from "./account.controller.js";
 
-const router = express.Router();
+export function createAccountRouter(accountController: AccountController) {
+  const router = express.Router();
 
-router.get("/profile", validate(profileSchema), getProfile);
+  router.get(
+    "/profile",
+    validate(profileSchema),
+    accountController.getProfile,
+  );
 
-export default router;
+  return router;
+}

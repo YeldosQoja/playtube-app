@@ -7,7 +7,7 @@ import {
 import AppError from "#utils/AppError.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
-class AccountRepository implements IAccountRepository {
+export class AccountRepository implements IAccountRepository {
   async createAccount(
     firstName: string,
     lastName: string,
@@ -46,5 +46,3 @@ class AccountRepository implements IAccountRepository {
     return account;
   }
 }
-
-export const repository = new AccountRepository();

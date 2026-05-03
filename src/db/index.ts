@@ -7,7 +7,6 @@ import * as commentsSchema from "#db/schema/comments.sql.js";
 import * as playlistsSchema from "#db/schema/playlists.sql.js";
 import * as relationsSchema from "#db/schema/relations.js";
 import * as tagsSchema from "#db/schema/tags.sql.js";
-import * as authUsersSchema from "#db/schema/auth-users.sql.js";
 import * as videosSchema from "#db/schema/videos.sql.js";
 import * as videosToPlaylistsSchema from "#db/schema/videosToPlaylists.sql.js";
 import * as videosToTagsSchema from "#db/schema/videosToTags.sql.js";
@@ -36,7 +35,6 @@ export const db = drizzle(pool, {
     ...playlistsSchema,
     ...relationsSchema,
     ...tagsSchema,
-    ...authUsersSchema,
     ...videosSchema,
     ...videosToPlaylistsSchema,
     ...videosToTagsSchema,

@@ -2,7 +2,6 @@ import { and, countDistinct, eq, inArray, sql } from "drizzle-orm";
 import { db } from "#db/index.js";
 import { videos } from "#db/schema/videos.sql.js";
 import { comments } from "#db/schema/comments.sql.js";
-import { authUsers } from "#db/schema/auth-users.sql.js";
 import { tags } from "#db/schema/tags.sql.js";
 import { videosToPlaylists } from "#db/schema/videosToPlaylists.sql.js";
 import { videosToTags } from "#db/schema/videosToTags.sql.js";
@@ -233,41 +232,6 @@ export async function getCommentsByVideoId(
     .where(eq(comments.video, videoId))
     .limit(limit)
     .offset(offset);
-}
-
-// Users queries
-export async function findUserByUsername(username: string) {
-  const user = await db.query.authUsers.findFirst({
-    where: (fields, operators) => operators.eq(fields.username, username),
-  });
-
-  if (!user) {
-    throw new Error(`There is no such user ${username}`);
-  }
-
-  return user;
-}
-
-export async function findUserById(id: number) {
-  const user = await db.query.authUsers.findFirst({
-    where: (fields, operators) => operators.eq(fields.id, id),
-  });
-
-  if (!user) {
-    throw new Error(`User not found with id ${id}`);
-  }
-
-  return user;
-}
-
-export async function createUser(
-  data: Omit<typeof authUsers.$inferInsert, "id" | "createdAt">,
-) {
-  const result = await db
-    .insert(authUsers)
-    .values({ ...data, createdAt: new Date().toISOString() })
-    .returning({ id: authUsers.id, username: authUsers.username });
-  return result[0];
 }
 
 export async function getVideoCategories() {

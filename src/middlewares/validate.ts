@@ -18,7 +18,7 @@ export function validate(schema: RequestSchema) {
     try {
       const { query, body, params } = req;
 
-      logger.info({ query, body, params }, "Request data: ");
+      logger.debug({ query, body, params }, "Request data: ");
 
       const result = await schema.parseAsync({
         query,

@@ -53,11 +53,12 @@ const accountService = new AccountService(accountRepository);
 const accountController = createAccountController(accountService);
 const accountRouter = createAccountRouter(accountController);
 
-app.use("/account", isAuthenticated, accountRouter);
-app.use("/videos", isAuthenticated, videosRouter);
-app.use("/comments", isAuthenticated, commentsRouter);
-app.use("/upload", isAuthenticated, uploadRouter);
-app.use("/playlists", isAuthenticated, playlistsRouter);
+app.use("/", isAuthenticated(accountService));
+app.use("/account", accountRouter);
+app.use("/videos", videosRouter);
+app.use("/comments", commentsRouter);
+app.use("/upload", uploadRouter);
+app.use("/playlists", playlistsRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {

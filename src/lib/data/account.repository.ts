@@ -40,7 +40,19 @@ export class AccountRepository implements IAccountRepository {
     });
 
     if (!account) {
-      throw new Error(`User not found with id ${accountId}`);
+      throw new Error(`Account not found with id ${accountId}`);
+    }
+
+    return account;
+  }
+
+  async getAccountByUserId(userId: number): Promise<Account> {
+    const account = await db.query.accounts.findFirst({
+      where: (fields, operators) => operators.eq(fields.authUser, userId),
+    });
+
+    if (!account) {
+      throw new Error(`Account not found with user id ${userId}`);
     }
 
     return account;

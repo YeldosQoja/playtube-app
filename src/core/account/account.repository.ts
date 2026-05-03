@@ -15,4 +15,5 @@ export interface IAccountRepository {
     email?: string,
   ): Promise<Account>;
   getAccountById(accountId: number): Promise<Account>;
+  getAccountByUserId(userId: number): Promise<Account>;
 }

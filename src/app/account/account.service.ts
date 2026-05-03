@@ -28,4 +28,9 @@ export class AccountService {
     const account = await this.repository.getAccountById(id);
     return account;
   }
+
+  async getAccountByUserId(userId: number) {
+    const account = await this.repository.getAccountByUserId(userId);
+    return account;
+  }
 }

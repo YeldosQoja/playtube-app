@@ -12,3 +12,5 @@ export const createAccountSchema = z.object({
   params: empty,
   query: empty,
 });
+
+export type CreateAccountBody = z.infer<typeof createAccountSchema>["body"];

@@ -1,14 +1,12 @@
-import type { Request as ExpressRequest } from "express";
+import "express";
 
 declare global {
-  namespace e {
+  namespace Express {
+    interface User {
+      id: string;
+    }
     interface Request {
-      user?: User;
-      validatedQuery: { [key: string]: string };
+      user: User;
     }
   }
-}
-
-export interface AuthenticatedRequest extends ExpressRequest {
-  user: User;
 }

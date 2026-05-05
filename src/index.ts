@@ -53,7 +53,7 @@ const accountService = new AccountService(accountRepository);
 const accountController = createAccountController(accountService);
 const accountRouter = createAccountRouter(accountController);
 
-app.use("/", isAuthenticated(accountService));
+app.use("/", isAuthenticated);
 app.use("/account", accountRouter);
 app.use("/videos", videosRouter);
 app.use("/comments", commentsRouter);

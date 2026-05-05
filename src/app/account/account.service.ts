@@ -11,7 +11,7 @@ export class AccountService {
     firstName: string,
     lastName: string,
     username: string,
-    authUserId: number,
+    authUserId: string,
     email?: string,
   ) {
     const newAccount = await this.repository.createAccount(
@@ -29,7 +29,7 @@ export class AccountService {
     return account;
   }
 
-  async getAccountByUserId(userId: number) {
+  async getAccountByUserId(userId: string) {
     const account = await this.repository.getAccountByUserId(userId);
     return account;
   }

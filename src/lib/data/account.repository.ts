@@ -12,7 +12,7 @@ export class AccountRepository implements IAccountRepository {
     firstName: string,
     lastName: string,
     username: string,
-    authUserId: number,
+    authUserId: string,
     email?: string,
   ): Promise<Account> {
     const res = await db
@@ -46,7 +46,7 @@ export class AccountRepository implements IAccountRepository {
     return account;
   }
 
-  async getAccountByUserId(userId: number): Promise<Account> {
+  async getAccountByUserId(userId: string): Promise<Account> {
     const account = await db.query.accounts.findFirst({
       where: (fields, operators) => operators.eq(fields.authUser, userId),
     });

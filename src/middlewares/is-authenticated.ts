@@ -1,8 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import * as jose from "jose";
 import { errors } from "jose";
-import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import type { IAccountService } from "#core/account/account.service.js";
 import logger from "#lib/logger.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
 const JWT_PUBLIC_KEY = process.env["JWT_PUBLIC_KEY"];
 
@@ -17,9 +18,10 @@ export const isAuthenticated = async (
     res.status(HttpStatusCode.UNAUTHORIZED).send({ msg: "Unauthorized" });
     return;
   }
+
   const [scheme, token] = authorization.split(" ") || [];
   if (!token) {
-    logger.error("Unauthorized.");
+    logger.error({ scheme }, "Unauthorized.");
     res.status(HttpStatusCode.UNAUTHORIZED).send({ msg: "Unauthorized" });
     return;
   }
@@ -29,35 +31,39 @@ export const isAuthenticated = async (
     const {
       payload: { sub },
     } = await jose.jwtVerify(token, publicKey);
+
     if (!sub) {
       return res
         .status(HttpStatusCode.UNAUTHORIZED)
         .send({ msg: "Unauthorized" });
     }
-    req.user = {
-      id: sub,
-    };
+
+    req.user = { id: sub };
     return next();
   } catch (err) {
     if (err instanceof errors.JWTExpired) {
-      // token was valid but expired
       return res
         .status(HttpStatusCode.UNAUTHORIZED)
         .send({ msg: "Token expired" });
     }
     if (err instanceof errors.JWTInvalid) {
-      // malformed token
       return res
         .status(HttpStatusCode.UNAUTHORIZED)
         .send({ msg: "Invalid token" });
     }
     if (err instanceof errors.JWSSignatureVerificationFailed) {
-      // signature didn't match — possible tampering
       return res
         .status(HttpStatusCode.UNAUTHORIZED)
         .send({ msg: "Invalid signature" });
     }
-    // unexpected error — let it bubble up as 500
+
     throw err;
   }
 };
+
+export function createAccountContextMiddleware(accountService: IAccountService) {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    req.account = await accountService.getAccountByUserId(req.user.id);
+    next();
+  };
+}

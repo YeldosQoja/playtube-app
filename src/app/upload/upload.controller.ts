@@ -1,75 +1,77 @@
 import type { RequestHandler } from "express";
-import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import { requireAccount } from "#core/account/account.policy.js";
+import type { IUploadService } from "#core/upload/upload.service.js";
 import logger from "#lib/logger.js";
-import {
-  abortMultipartUpload,
-  completeMultipartUpload,
-  createSimpleUpload,
-  startMultipartUpload,
-} from "./upload.service.js";
+import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
-export const createSimpleUploadHandler: RequestHandler = async (req, res) => {
-  const { contentType } = req.body;
-  const { url, key } = await createSimpleUpload(
-    req.user!.username,
-    contentType,
-  );
+export function createUploadController(uploadService: IUploadService) {
+  return {
+    createSimple: (async (req, res) => {
+      const account = requireAccount(req.account);
+      const { contentType } = req.body;
+      const { url, key } = await uploadService.createSimpleUpload(
+        account,
+        contentType,
+      );
 
-  logger.info("Signed upload url created.");
-  res.status(HttpStatusCode.OK).send({
-    msg: "Success!",
-    url,
-    key,
-  });
-};
+      logger.info("Signed upload url created.");
+      res.status(HttpStatusCode.OK).send({
+        msg: "Success!",
+        url,
+        key,
+      });
+    }) satisfies RequestHandler,
 
-export const startMultipartUploadHandler: RequestHandler = async (req, res) => {
-  const { user } = req;
-  const { key, contentType, fileSize } = req.body;
+    startMultipart: (async (req, res) => {
+      const account = requireAccount(req.account);
+      const { key, contentType, fileSize } = req.body;
+      const { uploadId, urls } = await uploadService.startMultipartUpload(
+        account,
+        key,
+        contentType,
+        fileSize,
+      );
 
-  const { uploadId, urls } = await startMultipartUpload(
-    user!.username,
-    key,
-    contentType,
-    fileSize,
-  );
+      logger.info("Multipart upload started.");
+      logger.info("Signed Multipart upload urls created.");
 
-  logger.info("Multipart upload started.");
-  logger.info("Signed Multipart upload urls created.");
+      res.status(HttpStatusCode.OK).send({
+        msg: "Multipart upload has successfully created.",
+        uploadId,
+        urls,
+      });
+    }) satisfies RequestHandler,
 
-  res.status(HttpStatusCode.OK).send({
-    msg: "Multipart upload has successfully created.",
-    uploadId,
-    urls,
-  });
-};
+    completeMultipart: (async (req, res) => {
+      const account = requireAccount(req.account);
+      const { uploadId, key, parts } = req.body;
 
-export const completeMultipartUploadHandler: RequestHandler = async (
-  req,
-  res,
-) => {
-  const { user } = req;
-  const { uploadId, key, parts } = req.body;
+      await uploadService.completeMultipartUpload(account, uploadId, key, parts);
 
-  await completeMultipartUpload(user!.username, uploadId, key, parts);
+      logger.info("Multipart upload complete.");
 
-  logger.info("Multipart upload complete.");
+      res
+        .status(HttpStatusCode.OK)
+        .send({ msg: `Multipart upload with id ${uploadId} has completed!` });
+    }) satisfies RequestHandler,
 
-  res
-    .status(HttpStatusCode.OK)
-    .send({ msg: `Multipart upload with id ${uploadId} has completed!` });
-};
+    abortMultipart: (async (req, res) => {
+      const account = requireAccount(req.account);
+      const { uploadId, key } = req.body;
+      const response = await uploadService.abortMultipartUpload(
+        account,
+        uploadId,
+        key,
+      );
 
-export const abortMultipartUploadHandler: RequestHandler = async (req, res) => {
-  const { user } = req;
-  const { uploadId, key } = req.body;
+      logger.info("Multipart upload aborted.");
 
-  const response = await abortMultipartUpload(user!.username, uploadId, key);
+      res.status(HttpStatusCode.OK).send({
+        msg: `Multipart upload with id ${uploadId} has been cancelled successfully!`,
+        data: response,
+      });
+    }) satisfies RequestHandler,
+  };
+}
 
-  logger.info("Multipart upload aborted.");
-
-  res.status(HttpStatusCode.OK).send({
-    msg: `Multipart upload with id ${uploadId} has been cancelled successfully!`,
-    data: response,
-  });
-};
+export type UploadController = ReturnType<typeof createUploadController>;

@@ -1,33 +1,30 @@
 import express from "express";
 import { validate } from "#middlewares/validate.js";
-import { simpleUploadSchema } from "#validators/upload/simple-upload.schema.js";
-import { multipartStartSchema } from "#validators/upload/multipart-start.schema.js";
-import { multipartCompleteSchema } from "#validators/upload/multipart-complete.schema.js";
 import { multipartAbortSchema } from "#validators/upload/multipart-abort.schema.js";
-import {
-  abortMultipartUploadHandler,
-  completeMultipartUploadHandler,
-  createSimpleUploadHandler,
-  startMultipartUploadHandler,
-} from "./upload.controller.js";
+import { multipartCompleteSchema } from "#validators/upload/multipart-complete.schema.js";
+import { multipartStartSchema } from "#validators/upload/multipart-start.schema.js";
+import { simpleUploadSchema } from "#validators/upload/simple-upload.schema.js";
+import type { UploadController } from "./upload.controller.js";
 
-const router = express.Router();
+export function createUploadRouter(uploadController: UploadController) {
+  const router = express.Router();
 
-router.post("/", validate(simpleUploadSchema), createSimpleUploadHandler);
-router.post(
-  "/multipart/start",
-  validate(multipartStartSchema),
-  startMultipartUploadHandler,
-);
-router.post(
-  "/multipart/complete",
-  validate(multipartCompleteSchema),
-  completeMultipartUploadHandler,
-);
-router.post(
-  "/multipart/abort",
-  validate(multipartAbortSchema),
-  abortMultipartUploadHandler,
-);
+  router.post("/simple", validate(simpleUploadSchema), uploadController.createSimple);
+  router.post(
+    "/multipart/start",
+    validate(multipartStartSchema),
+    uploadController.startMultipart,
+  );
+  router.post(
+    "/multipart/complete",
+    validate(multipartCompleteSchema),
+    uploadController.completeMultipart,
+  );
+  router.post(
+    "/multipart/abort",
+    validate(multipartAbortSchema),
+    uploadController.abortMultipart,
+  );
 
-export default router;
+  return router;
+}

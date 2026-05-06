@@ -1,9 +1,9 @@
 import type { RequestHandler } from "express";
-import { AccountService } from "./account.service.js";
+import type { IAccountService } from "#core/account/account.service.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import { CreateAccountBody } from "#validators/account/create-account.schema.js";
 
-export function createAccountController(accountService: AccountService) {
+export function createAccountController(accountService: IAccountService) {
   return {
     getProfile: (async (req, res) => {
       const account = await accountService.getAccountByUserId(req.user.id);

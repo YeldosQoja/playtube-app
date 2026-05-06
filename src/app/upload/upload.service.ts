@@ -1,80 +1,71 @@
 import { nanoid } from "nanoid";
-import { S3Service } from "#services/aws/S3Service.js";
-import AppError from "#utils/AppError.js";
-import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import type { Account } from "#core/account/account.repository.js";
+import {
+  thumbnailUploadPath,
+  UPLOAD_PART_SIZE_BYTES,
+  videoUploadPath,
+} from "#core/upload/upload.policy.js";
+import type { IUploadService } from "#core/upload/upload.service.js";
+import type {
+  CompletedUploadPart,
+  IUploadStorage,
+} from "#core/upload/upload.storage.js";
 
-const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
-const s3Service = new S3Service({ forcePathStyle: forcePathStyle === "true" });
-const PART_SIZE = 20_000_000;
+export class UploadService implements IUploadService {
+  constructor(private readonly uploadStorage: IUploadStorage) {}
 
-export async function createSimpleUpload(
-  username: string,
-  contentType?: string,
-) {
-  const key = nanoid();
-  const fullKey = `uploads/${username}/thumbnails/${key}`;
-  const command = s3Service.createSimpleUpload(fullKey, contentType);
-  const url = await s3Service.getSignedUrl(command);
-
-  return { key, url };
-}
-
-export async function startMultipartUpload(
-  username: string,
-  key: string,
-  contentType: string,
-  fileSize: number,
-) {
-  const fullKey = `uploads/${username}/videos/${key}`;
-  const partCount = Math.ceil(fileSize / PART_SIZE);
-  const command = s3Service.createMultipartUpload(fullKey, contentType);
-
-  const { UploadId } = await s3Service.sendCommand(command);
-
-  if (!UploadId) {
-    throw new AppError(
-      "Failed to create multipart upload - no UploadId returned",
-      HttpStatusCode.BAD_REQUEST,
-      false,
+  async createSimpleUpload(account: Account, contentType?: string) {
+    const key = nanoid();
+    const fullKey = thumbnailUploadPath(account.username, key);
+    const url = await this.uploadStorage.createSimpleUpload(
+      fullKey,
+      contentType,
     );
+
+    return { key, url };
   }
 
-  const urls = await Promise.all(
-    Array.from({ length: partCount }, async (_, i) => {
-      const PartNumber = i + 1;
-      const partCommand = s3Service.createPartUpload(
-        fullKey,
-        UploadId,
-        PartNumber,
-      );
-      const url = await s3Service.getSignedUrl(partCommand);
+  async startMultipartUpload(
+    account: Account,
+    key: string,
+    contentType: string,
+    fileSize: number,
+  ) {
+    const fullKey = videoUploadPath(account.username, key);
+    const partCount = Math.ceil(fileSize / UPLOAD_PART_SIZE_BYTES);
+    const uploadId = await this.uploadStorage.startMultipartUpload(
+      fullKey,
+      contentType,
+    );
 
-      return { PartNumber, url };
-    }),
-  );
+    const urls = await Promise.all(
+      Array.from({ length: partCount }, async (_, index) => {
+        const PartNumber = index + 1;
+        const url = await this.uploadStorage.createPartUploadUrl(
+          fullKey,
+          uploadId,
+          PartNumber,
+        );
 
-  return { uploadId: UploadId, urls };
-}
+        return { PartNumber, url };
+      }),
+    );
 
-export async function completeMultipartUpload(
-  username: string,
-  uploadId: string,
-  key: string,
-  parts: { ETag: string; PartNumber: number }[],
-) {
-  const fullKey = `uploads/${username}/videos/${key}`;
-  const command = s3Service.completeMultipartUpload(fullKey, uploadId, parts);
+    return { uploadId, urls };
+  }
 
-  await s3Service.client.send(command);
-}
+  async completeMultipartUpload(
+    account: Account,
+    uploadId: string,
+    key: string,
+    parts: CompletedUploadPart[],
+  ): Promise<void> {
+    const fullKey = videoUploadPath(account.username, key);
+    await this.uploadStorage.completeMultipartUpload(fullKey, uploadId, parts);
+  }
 
-export async function abortMultipartUpload(
-  username: string,
-  uploadId: string,
-  key: string,
-) {
-  const fullKey = `uploads/${username}/videos/${key}`;
-  const command = s3Service.abortMultipartUpload(fullKey, uploadId);
-
-  return await s3Service.client.send(command);
+  async abortMultipartUpload(account: Account, uploadId: string, key: string) {
+    const fullKey = videoUploadPath(account.username, key);
+    return await this.uploadStorage.abortMultipartUpload(fullKey, uploadId);
+  }
 }

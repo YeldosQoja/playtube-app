@@ -1,6 +1,7 @@
 import { IAccountRepository } from "#core/account/account.repository.js";
+import type { IAccountService } from "#core/account/account.service.js";
 
-export class AccountService {
+export class AccountService implements IAccountService {
   private repository: IAccountRepository;
 
   constructor(repository: IAccountRepository) {

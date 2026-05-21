@@ -11,3 +11,8 @@ export const updateCommentSchema = z.object({
   }),
   query: empty,
 });
+
+type Schema = z.infer<typeof updateCommentSchema>;
+
+export type UpdateCommentBody = Schema["body"];
+export type UpdateCommentParams = Schema["params"];

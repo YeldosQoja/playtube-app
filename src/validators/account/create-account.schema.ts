@@ -8,6 +8,7 @@ export const createAccountSchema = z.object({
     lastName: z.string().min(1),
     username: z.string().min(1),
     email: z.string().email().optional(),
+    birthday: z.date(),
   }),
   params: empty,
   query: empty,

@@ -213,7 +213,23 @@ export async function findVideoById(id: number) {
 export async function createComment(
   data: Omit<typeof comments.$inferInsert, "id" | "createdAt">,
 ) {
-  const result = await db.insert(comments).values(data).returning();
+  const { rows } = await db.execute(
+    sql`SELECT nextval('comment_id_seq') AS id`,
+  );
+  const row = rows[0];
+
+  if (!row) {
+    throw new Error("Comment identity can't be generated.");
+  }
+
+  const result = await db
+    .insert(comments)
+    .values({
+      ...data,
+      id: Number(row["id"]),
+      createdAt: new Date().toISOString(),
+    })
+    .returning();
   return result[0];
 }
 

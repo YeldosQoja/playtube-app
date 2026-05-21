@@ -5,8 +5,7 @@ const empty = z.object({}).optional();
 export const updatePlaylistSchema = z.object({
   body: z.object({
     title: z.string().min(1).optional(),
-    desc: z.string().optional().nullable(),
-    thumbnailStorageKey: z.string().min(1).optional(),
+    desc: z.string().optional(),
     thumbnailKey: z.string().min(1).optional(),
   }),
   params: z.object({
@@ -14,3 +13,5 @@ export const updatePlaylistSchema = z.object({
   }),
   query: empty,
 });
+
+export type UpdatePlaylistBody = z.infer<typeof updatePlaylistSchema>["body"];

@@ -1,7 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import * as jose from "jose";
 import { errors } from "jose";
-import type { IAccountService } from "#core/account/account.service.js";
 import logger from "#lib/logger.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 
@@ -60,10 +59,3 @@ export const isAuthenticated = async (
     throw err;
   }
 };
-
-export function createAccountContextMiddleware(accountService: IAccountService) {
-  return async (req: Request, _res: Response, next: NextFunction) => {
-    req.account = await accountService.getAccountByUserId(req.user.id);
-    next();
-  };
-}

@@ -1,34 +1,32 @@
 import express from "express";
 import logger from "#lib/logger.js";
 import cors from "cors";
+import { createAccountController } from "#app/account/account.controller.js";
 import { createAccountRouter } from "#app/account/account.route.js";
 import { createCommentController } from "#app/comment/comment.controller.js";
 import { createCommentRouter } from "#app/comment/comment.route.js";
-import { CommentService } from "#app/comment/comment.service.js";
 import { createPlaylistController } from "#app/playlist/playlist.controller.js";
 import { createPlaylistRouter } from "#app/playlist/playlist.route.js";
-import { PlaylistService } from "#app/playlist/playlist.service.js";
 import { createUploadController } from "#app/upload/upload.controller.js";
 import { createUploadRouter } from "#app/upload/upload.route.js";
-import { UploadService } from "#app/upload/upload.service.js";
 import { createVideoController } from "#app/video/video.controller.js";
 import { createVideoRouter } from "#app/video/video.route.js";
-import { VideoService } from "#app/video/video.service.js";
-import {
-  createAccountContextMiddleware,
-  isAuthenticated,
-} from "#middlewares/is-authenticated.js";
+import { isAuthenticated } from "#middlewares/is-authenticated.js";
 import { handleError } from "#middlewares/handle-error.js";
 import { pinoHttp } from "pino-http";
 import { AccountRepository } from "#lib/data/account.repository.js";
 import { CommentRepository } from "#lib/data/comment.repository.js";
 import { PlaylistRepository } from "#lib/data/playlist.repository.js";
 import { VideoRepository } from "#lib/data/video.repository.js";
-import { AccountService } from "#app/account/account.service.js";
-import { createAccountController } from "#app/account/account.controller.js";
-import { CloudFrontVideoAssetService } from "#lib/storage/cloudfront-video.asset-service.js";
-import { S3UploadStorage } from "#lib/storage/s3-upload.storage.js";
-import { CloudFrontService } from "#services/aws/CloudFrontService.js";
+import { CloudFrontAdapter } from "#lib/storage/cloudfront.adapter.js";
+import { S3Adapter } from "#lib/storage/s3.adapter.js";
+import { SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import { AccountService } from "#components/account/account.service.js";
+import { CommentService } from "#components/comment/comment.service.js";
+import { PlaylistService } from "#components/playlist/playlist.service.js";
+import { UploadService } from "#components/upload/upload.service.js";
+import { VideoFactory } from "#components/video/domain/video.factory.js";
+import { VideoService } from "#components/video/video.service.js";
 
 export const app = express();
 
@@ -70,31 +68,42 @@ const accountService = new AccountService(accountRepository);
 const accountController = createAccountController(accountService);
 const accountRouter = createAccountRouter(accountController);
 const videoRepository = new VideoRepository();
-const videoAssetService = new CloudFrontVideoAssetService(
-  new CloudFrontService(),
+const videoAssetService = new CloudFrontAdapter(new SecretsManagerClient());
+const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
+const uploadStorage = new S3Adapter({
+  forcePathStyle: forcePathStyle === "true",
+});
+const uploadService = new UploadService(accountRepository, uploadStorage);
+const videoService = new VideoService(
+  new VideoFactory(),
+  videoRepository,
+  videoAssetService,
+  accountRepository,
+  uploadService,
 );
-const videoService = new VideoService(videoRepository, videoAssetService);
 const videoController = createVideoController(videoService);
 const videoRouter = createVideoRouter(videoController);
 const commentRepository = new CommentRepository();
-const commentService = new CommentService(commentRepository, videoRepository);
+const commentService = new CommentService(
+  commentRepository,
+  videoRepository,
+  accountRepository,
+);
 const commentController = createCommentController(commentService);
 const commentRouter = createCommentRouter(commentController);
 const playlistRepository = new PlaylistRepository();
-const playlistService = new PlaylistService(playlistRepository, videoRepository);
+const playlistService = new PlaylistService(
+  playlistRepository,
+  videoRepository,
+  accountRepository,
+);
 const playlistController = createPlaylistController(playlistService);
 const playlistRouter = createPlaylistRouter(playlistController);
-const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
-const uploadStorage = new S3UploadStorage({
-  forcePathStyle: forcePathStyle === "true",
-});
-const uploadService = new UploadService(uploadStorage);
 const uploadController = createUploadController(uploadService);
 const uploadRouter = createUploadRouter(uploadController);
 
 app.use("/", isAuthenticated);
 app.use("/account", accountRouter);
-app.use(createAccountContextMiddleware(accountService));
 app.use("/video", videoRouter);
 app.use("/comment", commentRouter);
 app.use("/upload", uploadRouter);

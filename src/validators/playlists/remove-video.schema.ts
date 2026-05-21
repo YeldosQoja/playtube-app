@@ -10,3 +10,7 @@ export const removeVideoFromPlaylistSchema = z.object({
   }),
   query: empty,
 });
+
+export type RemoveVideoParams = z.infer<
+  typeof removeVideoFromPlaylistSchema
+>["params"];

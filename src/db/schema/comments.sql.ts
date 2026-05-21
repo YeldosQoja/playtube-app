@@ -1,10 +1,19 @@
-import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  integer,
+  pgSequence,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { videos } from "./videos.sql.js";
 import { accounts } from "./accounts.sql.js";
 
+export const commentSequence = pgSequence("comment_id_seq");
+
 export const comments = pgTable("comments", {
-  id: integer("id").unique().generatedAlwaysAsIdentity().primaryKey(),
+  id: bigint({ mode: "number" }).primaryKey(),
   author: integer("author")
     .references(() => accounts.id, { onDelete: "cascade" })
     .notNull(),
@@ -19,5 +28,5 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "string",
-  }),
+  }).notNull(),
 });

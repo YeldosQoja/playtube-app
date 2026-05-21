@@ -1,81 +1,66 @@
 import type { RequestHandler } from "express";
-import { requireAccount } from "#core/account/account.policy.js";
-import type { IVideoService } from "#core/video/video.service.js";
-import logger from "#lib/logger.js";
+import { VideoService } from "#components/video/video.service.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
+import { CreateDraftBody } from "#validators/videos/create-draft.schema.js";
+import { SaveVideoMetadataBody } from "#validators/videos/save-video.schema.js";
 
-export function createVideoController(videoService: IVideoService) {
+export function createVideoController(videoService: VideoService) {
   return {
     createDraft: (async (req, res) => {
-      const account = requireAccount(req.account);
-      const { title } = req.body;
-      const { key } = await videoService.createDraft(account, title);
+      const { title, contentType, fileSize } = req.body as CreateDraftBody;
+      const { key, upload } = await videoService.createDraft({
+        userId: req.user.id,
+        title,
+        contentType,
+        fileSize,
+      });
 
-      res.status(HttpStatusCode.OK).send({ key });
+      res.status(HttpStatusCode.OK).send({
+        key,
+        uploadUrls: upload.urls,
+        uploadSession: upload.sessionId,
+      });
     }) satisfies RequestHandler,
 
     list: (async (req, res) => {
-      const account = requireAccount(req.account);
-      const videos = await videoService.listUploaded(account);
+      const videos = await videoService.listUploaded();
 
       res.status(HttpStatusCode.OK).send({ videos });
     }) satisfies RequestHandler,
 
-    listCategories: (async (_req, res) => {
-      const categories = await videoService.listCategories();
-
-      res.status(HttpStatusCode.OK).send({ categories });
-    }) satisfies RequestHandler,
-
     save: (async (req, res) => {
-      const account = requireAccount(req.account);
       const videoKey = req.params["videoKey"] as string;
-      const { playlist, tags, ...data } = req.body;
+      const { title, desc, thumbnailKey, playlist, category, tags, ...rest } =
+        req.body as SaveVideoMetadataBody;
 
-      await videoService.save(account, videoKey, {
-        data,
-        playlist,
-        tags,
+      await videoService.save({
+        key: videoKey,
+        title,
+        desc,
+        thumbnailKey,
+        categoryId: category,
+        playlistId: playlist,
+        tags: tags.split(",").map((t) => t.trim()),
+        ...rest,
       });
 
-      res.status(HttpStatusCode.OK).send({ msg: "The video has been created!" });
-    }) satisfies RequestHandler,
-
-    listComments: (async (req, res) => {
-      const videoKey = req.params["videoKey"] as string;
-      const limit = Number(req.query["limit"]);
-      const offset = Number(req.query["offset"] ?? 0);
-      const comments = await videoService.listComments(videoKey, limit, offset);
-
-      res.status(HttpStatusCode.OK).send({
-        msg: "Comments retrieved.",
-        comments,
-      });
+      res
+        .status(HttpStatusCode.OK)
+        .send({ msg: "The video has been created!" });
     }) satisfies RequestHandler,
 
     delete: (async (req, res) => {
-      const account = requireAccount(req.account);
       const videoKey = req.params["videoKey"] as string;
-
-      await videoService.delete(account, videoKey);
-
-      res.status(HttpStatusCode.OK).send({ msg: "video deleted successfully." });
+      await videoService.delete(videoKey);
+      res
+        .status(HttpStatusCode.OK)
+        .send({ msg: "video deleted successfully." });
     }) satisfies RequestHandler,
 
     get: (async (req, res) => {
-      const account = requireAccount(req.account);
       const videoKey = req.params["videoKey"] as string;
-      const result = await videoService.getDetails(account, videoKey);
-      const { cookies, cookieDomain, cookiePath, ...data } = result;
-      const domain = cookieDomain ? `Domain=${cookieDomain};` : "";
-      const cookieHeaders = Object.entries(cookies).map(([key, value]) => {
-        const cookie = `${key}=${value};${domain}Path=${cookiePath};Secure;HttpOnly`;
-        logger.debug({ cookie }, "Cookie value");
-        return cookie;
-      });
-
-      res.setHeader("Set-Cookie", cookieHeaders);
-
+      const result = await videoService.getVideoDetails(videoKey);
+      const { ...data } = result;
       res.status(HttpStatusCode.OK).send({ data });
     }) satisfies RequestHandler,
   };

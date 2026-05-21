@@ -5,14 +5,13 @@
   "main": "src/index.js",
   "type": "module",
   "imports": {
-    "#core/*.js": "./dist/core/*.js",
+    "#components/*.js": "./dist/components/*.js",
     "#app/*.js": "./dist/app/*.js",
     "#config/*.js": "./dist/config/*.js",
     "#db/*.js": "./dist/db/*.js",
     "#middlewares/*.js": "./dist/middlewares/*.js",
     "#lib/*.js": "./dist/lib/*.js",
     "#utils/*.js": "./dist/utils/*.js",
-    "#services/*.js": "./dist/services/*.js",
     "#validators/*.js": "./dist/validators/*.js"
   },
   "scripts": {

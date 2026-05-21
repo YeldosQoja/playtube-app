@@ -10,3 +10,5 @@ export const addVideoToPlaylistSchema = z.object({
   }),
   query: empty,
 });
+
+export type AddVideoParams = z.infer<typeof addVideoToPlaylistSchema>["params"];

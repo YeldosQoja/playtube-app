@@ -1,103 +1,151 @@
-import { and, countDistinct, eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { AccountId } from "#components/account/domain/value-objects.js";
+import type { IPlaylistRepository } from "#components/playlist/domain/playlist.repository.js";
+import {
+  createPlaylist,
+  type Playlist,
+  type PlaylistSnapshot,
+} from "#components/playlist/domain/playlist.js";
+import {
+  LastUpdatedAt,
+  PlaylistDescription,
+  PlaylistId,
+  PlaylistThumbnailKey,
+  PlaylistTitle,
+} from "#components/playlist/domain/value-objects.js";
+import { VideoId } from "#components/video/domain/value-objects.js";
 import { db } from "#db/index.js";
 import { playlists } from "#db/schema/playlists.sql.js";
 import { videosToPlaylists } from "#db/schema/videosToPlaylists.sql.js";
-import type {
-  CreatePlaylistInput,
-  IPlaylistRepository,
-  PlaylistDetails,
-  PlaylistRecord,
-  PlaylistSummary,
-  UpdatePlaylistInput,
-} from "#core/playlist/playlist.repository.js";
+
+type PlaylistRecord = typeof playlists.$inferSelect;
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export class PlaylistRepository implements IPlaylistRepository {
-  async create(data: CreatePlaylistInput): Promise<PlaylistRecord> {
-    const result = await db.insert(playlists).values(data).returning();
-    const playlist = result[0];
+  async nextId(): Promise<PlaylistId> {
+    const { rows } = await db.execute(
+      sql`SELECT nextval('playlist_id_seq') AS id`,
+    );
+    const row = rows[0];
 
-    if (!playlist) {
-      throw new Error("Playlist could not be created.");
+    if (!row) {
+      throw new Error("Playlist identity can't be generated.");
     }
 
-    return playlist;
+    return new PlaylistId(Number(row["id"]));
   }
 
-  async listByAuthor(authorId: number): Promise<PlaylistSummary[]> {
-    return await db
-      .select({
-        id: playlists.id,
-        title: playlists.title,
-        lastUpdatedAt: playlists.lastUpdatedAt,
-        videoCount: countDistinct(videosToPlaylists.video),
-      })
-      .from(playlists)
-      .leftJoin(videosToPlaylists, eq(playlists.id, videosToPlaylists.playlist))
-      .where(eq(playlists.author, authorId))
-      .groupBy(playlists.id)
-      .orderBy(playlists.lastUpdatedAt);
-  }
+  async add(playlist: Playlist): Promise<void> {
+    const snapshot = playlist.toSnapshot();
+    const now = new Date().toISOString();
 
-  async findById(id: number): Promise<PlaylistDetails> {
-    const playlist = await db.query.playlists.findFirst({
-      where: (fields, operators) => operators.eq(fields.id, id),
-      with: {
-        videosToPlaylists: {
-          with: {
-            video: true,
-          },
-        },
-      },
+    await db.transaction(async (tx) => {
+      await tx.insert(playlists).values({
+        ...this.toPersistence(snapshot),
+        createdAt: now,
+      });
+
+      await this.syncVideos(snapshot, tx);
     });
+  }
+
+  async save(playlist: Playlist): Promise<void> {
+    const snapshot = playlist.toSnapshot();
+    const persistence = this.toPersistence(snapshot);
+    const { id, ...data } = persistence;
+
+    await db.transaction(async (tx) => {
+      const result = await tx
+        .update(playlists)
+        .set(data)
+        .where(eq(playlists.id, id))
+        .returning({ id: playlists.id });
+
+      if (!result[0]) {
+        throw new Error(`Playlist not found with id ${id}.`);
+      }
+
+      await this.syncVideos(snapshot, tx);
+    });
+  }
+
+  async delete(id: PlaylistId): Promise<void> {
+    await db.delete(playlists).where(eq(playlists.id, id.value));
+  }
+
+  async findById(id: PlaylistId): Promise<Playlist> {
+    const rows = await db
+      .select()
+      .from(playlists)
+      .where(eq(playlists.id, id.value))
+      .limit(1);
+    const playlist = rows[0];
 
     if (!playlist) {
-      throw new Error(`Playlist not found with id ${id}.`);
+      throw new Error(`Playlist not found with id ${id.value}.`);
     }
 
-    return playlist;
+    return await this.toDomain(playlist);
   }
 
-  async updateById(
-    id: number,
-    data: UpdatePlaylistInput,
-  ): Promise<PlaylistRecord> {
-    const result = await db
-      .update(playlists)
-      .set(data)
-      .where(eq(playlists.id, id))
-      .returning();
-    const playlist = result[0];
+  async findManyByAccountId(accountId: AccountId): Promise<Playlist[]> {
+    const rows = await db
+      .select()
+      .from(playlists)
+      .where(eq(playlists.author, accountId.value));
 
-    if (!playlist) {
-      throw new Error(`Playlist not found with id ${id}.`);
-    }
-
-    return playlist;
+    return await Promise.all(rows.map((playlist) => this.toDomain(playlist)));
   }
 
-  async deleteById(id: number): Promise<void> {
-    await db.delete(playlists).where(eq(playlists.id, id));
+  private toPersistence(snapshot: PlaylistSnapshot) {
+    return {
+      id: snapshot.id,
+      author: snapshot.authorId,
+      title: snapshot.title,
+      desc: snapshot.description,
+      thumbnailStorageKey: snapshot.thumbnailKey,
+      lastUpdatedAt: snapshot.lastUpdatedAt,
+    };
   }
 
-  async addVideo(playlistId: number, videoId: number): Promise<void> {
-    await db
-      .insert(videosToPlaylists)
-      .values({
-        playlist: playlistId,
-        video: videoId,
-        addedAt: new Date().toISOString(),
-      })
-      .onConflictDoNothing();
+  private async toDomain(playlist: PlaylistRecord): Promise<Playlist> {
+    const links = await db
+      .select({ id: videosToPlaylists.video })
+      .from(videosToPlaylists)
+      .where(eq(videosToPlaylists.playlist, playlist.id));
+
+    return createPlaylist(
+      new PlaylistId(playlist.id),
+      new AccountId(playlist.author),
+      new PlaylistTitle(playlist.title),
+      playlist.desc ? new PlaylistDescription(playlist.desc) : null,
+      new PlaylistThumbnailKey(playlist.thumbnailStorageKey),
+      new LastUpdatedAt(playlist.lastUpdatedAt),
+      links.map((link) => new VideoId(link.id)),
+    );
   }
 
-  async removeVideo(playlistId: number, videoId: number): Promise<void> {
-    await db
+  private async syncVideos(
+    snapshot: PlaylistSnapshot,
+    tx: Transaction,
+  ): Promise<void> {
+    await tx
       .delete(videosToPlaylists)
-      .where(
-        and(
-          eq(videosToPlaylists.playlist, playlistId),
-          eq(videosToPlaylists.video, videoId),
-        ),
-      );
+      .where(eq(videosToPlaylists.playlist, snapshot.id));
+
+    if (!snapshot.videoIds.length) {
+      return;
+    }
+
+    await tx
+      .insert(videosToPlaylists)
+      .values(
+        snapshot.videoIds.map((videoId) => ({
+          playlist: snapshot.id,
+          video: videoId,
+          addedAt: new Date().toISOString(),
+        })),
+      )
+      .onConflictDoNothing();
   }
 }

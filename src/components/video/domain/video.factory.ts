@@ -10,7 +10,7 @@ import {
   VideoPrivacy,
   VideoProcessingStatus,
   VideoPublicationStatus,
-  VideoTagName,
+  VideoTag,
   VideoTitle,
 } from "./value-objects.js";
 import { Video } from "./video.js";
@@ -29,7 +29,7 @@ export class VideoFactory {
     permissions?: VideoPermissions,
     privacy?: VideoPrivacy,
     publicationStatus?: VideoPublicationStatus,
-    tags: VideoTagName[] = [],
+    tags: VideoTag[] = [],
   ) {
     const video = new Video(id, authorId, key, title);
     return video;

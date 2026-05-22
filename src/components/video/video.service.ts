@@ -11,7 +11,7 @@ import {
   VideoKey,
   VideoPermissions,
   VideoPrivacy,
-  VideoTagName,
+  VideoTag,
   VideoTitle,
 } from "./domain/value-objects.js";
 import { VideoFactory } from "./domain/video.factory.js";
@@ -166,7 +166,7 @@ export class VideoService {
       new VideoAudience(isForKids, isAgeRestricted),
       new VideoPermissions(allowComments, allowDownloads),
       new VideoPrivacy(privacy),
-      tags.map((tag) => new VideoTagName(tag)),
+      tags.map((tag) => new VideoTag(tag)),
     );
 
     await this.videoRepository.save(video);

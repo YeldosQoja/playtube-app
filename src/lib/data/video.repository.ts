@@ -17,7 +17,7 @@ import {
   type VideoPrivacyValue,
   VideoProcessingStatus,
   VideoPublicationStatus,
-  VideoTagName,
+  VideoTag,
   VideoTitle,
 } from "#components/video/domain/value-objects.js";
 import { db } from "#db/index.js";
@@ -176,7 +176,7 @@ export class VideoRepository implements IVideoRepository {
       new VideoPublicationStatus(
         (video.publicationStatus ?? "draft") as PublicationStatusValue,
       ),
-      videoTags.map((tag) => new VideoTagName(tag.name)),
+      videoTags.map((tag) => new VideoTag(tag.name)),
     );
   }
 

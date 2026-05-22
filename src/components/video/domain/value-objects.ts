@@ -157,7 +157,7 @@ export class VideoPermissions {
   }
 }
 
-export class VideoTagName {
+export class VideoTag {
   constructor(public readonly value: string) {
     const tag = value.trim();
 

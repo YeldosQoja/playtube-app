@@ -19,8 +19,8 @@ import {
   type VideoPrivacyValue,
   VideoProcessingStatus,
   VideoPublicationStatus,
-  VideoTagName,
   VideoTitle,
+  VideoTag,
 } from "./value-objects.js";
 
 export interface VideoSnapshot {
@@ -58,7 +58,7 @@ export class Video {
   private permissions: VideoPermissions;
   private privacy: VideoPrivacy;
   private publicationStatus: VideoPublicationStatus;
-  private tags: VideoTagName[];
+  private tags: VideoTag[];
 
   public getId() {
     return this.id;
@@ -93,7 +93,7 @@ export class Video {
     permissions: VideoPermissions,
     privacy: VideoPrivacy,
     publicationStatus: VideoPublicationStatus,
-    tags?: VideoTagName[],
+    tags?: VideoTag[],
   );
 
   constructor(
@@ -110,7 +110,7 @@ export class Video {
     permissions?: VideoPermissions,
     privacy?: VideoPrivacy,
     publicationStatus?: VideoPublicationStatus,
-    tags: VideoTagName[] = [],
+    tags: VideoTag[] = [],
   ) {
     if (description === undefined) {
       this.id = id;
@@ -178,7 +178,7 @@ export class Video {
     audience: VideoAudience,
     permissions: VideoPermissions,
     privacy: VideoPrivacy,
-    tags: VideoTagName[] = [],
+    tags: VideoTag[] = [],
   ) {
     this.title = title;
     this.description = description;

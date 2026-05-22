@@ -1,8 +1,5 @@
 import { IAccountRepository } from "#components/account/domain/account.repository.js";
-import {
-  AccountId,
-  AuthUserId,
-} from "#components/account/domain/value-objects.js";
+import { AuthUserId } from "#components/account/domain/value-objects.js";
 import { createPlaylist } from "./domain/playlist.js";
 import {
   LastUpdatedAt,

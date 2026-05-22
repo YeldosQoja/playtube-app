@@ -184,10 +184,6 @@ export class VideoRepository implements IVideoRepository {
     snapshot: VideoSnapshot,
     tx: Transaction,
   ): Promise<void> {
-    await tx
-      .delete(videosToPlaylists)
-      .where(eq(videosToPlaylists.video, snapshot.id));
-
     if (snapshot.playlistId === null) {
       return;
     }

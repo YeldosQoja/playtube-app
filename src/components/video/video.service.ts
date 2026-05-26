@@ -26,6 +26,7 @@ import { PlaylistId } from "#components/playlist/domain/value-objects.js";
 import { getAwsConfig } from "#config/aws.js";
 import logger from "#lib/logger.js";
 import { UploadService } from "#components/upload/upload.service.js";
+import { IPlaylistRepository } from "#components/playlist/domain/playlist.repository.js";
 
 export type VideoDetailsDTO = {
   id: number;
@@ -71,6 +72,7 @@ export class VideoService {
   constructor(
     private videoFactory: VideoFactory,
     private videoRepository: IVideoRepository,
+    private playlistRepository: IPlaylistRepository,
     private videoAccessPort: VideoAccessPort,
     private accountRepository: IAccountRepository,
     private uploadService: UploadService,
@@ -156,20 +158,25 @@ export class VideoService {
     } = input;
 
     const video = await this.videoRepository.findByKey(new VideoKey(key));
-
     video.saveMetadata(
       new VideoTitle(title),
       new VideoDescription(desc),
       new ThumbnailKey(thumbnailKey),
-      playlistId ? new PlaylistId(playlistId) : null,
       new VideoCategoryId(categoryId),
       new VideoAudience(isForKids, isAgeRestricted),
       new VideoPermissions(allowComments, allowDownloads),
       new VideoPrivacy(privacy),
       tags.map((tag) => new VideoTag(tag)),
     );
-
     await this.videoRepository.save(video);
+
+    if (playlistId) {
+      const playlist = await this.playlistRepository.findById(
+        new PlaylistId(playlistId),
+      );
+      playlist.addVideo(video.getId());
+      await this.playlistRepository.save(playlist);
+    }
   }
 
   async delete(key: string): Promise<void> {

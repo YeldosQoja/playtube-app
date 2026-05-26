@@ -45,7 +45,7 @@ export class PlaylistRepository implements IPlaylistRepository {
         createdAt: now,
       });
 
-      await this.syncVideos(snapshot, tx);
+      await this.syncVideos(tx, snapshot.id, snapshot.videoIds);
     });
   }
 
@@ -65,7 +65,7 @@ export class PlaylistRepository implements IPlaylistRepository {
         throw new Error(`Playlist not found with id ${id}.`);
       }
 
-      await this.syncVideos(snapshot, tx);
+      await this.syncVideos(tx, id, snapshot.videoIds);
     });
   }
 
@@ -126,22 +126,19 @@ export class PlaylistRepository implements IPlaylistRepository {
   }
 
   private async syncVideos(
-    snapshot: PlaylistSnapshot,
     tx: Transaction,
+    id: number,
+    videoIds: number[],
   ): Promise<void> {
-    await tx
-      .delete(videosToPlaylists)
-      .where(eq(videosToPlaylists.playlist, snapshot.id));
-
-    if (!snapshot.videoIds.length) {
+    if (!videoIds.length) {
       return;
     }
 
     await tx
       .insert(videosToPlaylists)
       .values(
-        snapshot.videoIds.map((videoId) => ({
-          playlist: snapshot.id,
+        videoIds.map((videoId) => ({
+          playlist: id,
           video: videoId,
           addedAt: new Date().toISOString(),
         })),

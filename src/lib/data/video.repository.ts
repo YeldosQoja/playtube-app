@@ -1,6 +1,5 @@
 import { eq, sql } from "drizzle-orm";
 import { AccountId } from "#components/account/domain/value-objects.js";
-import { PlaylistId } from "#components/playlist/domain/value-objects.js";
 import type { IVideoRepository } from "#components/video/domain/video.repository.js";
 import { Video, type VideoSnapshot } from "#components/video/domain/video.js";
 import {
@@ -23,7 +22,6 @@ import {
 import { db } from "#db/index.js";
 import { tags } from "#db/schema/tags.sql.js";
 import { videos } from "#db/schema/videos.sql.js";
-import { videosToPlaylists } from "#db/schema/videosToPlaylists.sql.js";
 import { videosToTags } from "#db/schema/videosToTags.sql.js";
 
 type VideoRecord = typeof videos.$inferSelect;
@@ -54,8 +52,7 @@ export class VideoRepository implements IVideoRepository {
         lastUpdatedAt: now,
       });
 
-      await this.syncPlaylist(snapshot, tx);
-      await this.syncTags(snapshot, tx);
+      await this.syncTags(tx, snapshot.id, snapshot.tags);
     });
   }
 
@@ -78,8 +75,7 @@ export class VideoRepository implements IVideoRepository {
         throw new Error(`Video not found with id ${id}.`);
       }
 
-      await this.syncPlaylist(snapshot, tx);
-      await this.syncTags(snapshot, tx);
+      await this.syncTags(tx, id, snapshot.tags);
     });
   }
 
@@ -135,7 +131,7 @@ export class VideoRepository implements IVideoRepository {
       title: snapshot.title,
       desc: snapshot.description,
       category: snapshot.categoryId,
-      status: snapshot.processingStatus,
+      processingStatus: snapshot.processingStatus,
       isForKids: snapshot.isForKids,
       isAgeRestricted: snapshot.isAgeRestricted,
       allowComments: snapshot.allowComments,
@@ -146,19 +142,20 @@ export class VideoRepository implements IVideoRepository {
   }
 
   private async toDomain(video: VideoRecord): Promise<Video> {
-    const [playlist] = await db
-      .select({ id: videosToPlaylists.playlist })
-      .from(videosToPlaylists)
-      .where(eq(videosToPlaylists.video, video.id))
-      .limit(1);
-
     const videoTags = await db
       .select({ name: tags.name })
       .from(videosToTags)
       .innerJoin(tags, eq(videosToTags.tag, tags.id))
       .where(eq(videosToTags.video, video.id));
 
-    // TODO: use different contructors based on publication status
+    if (video.publicationStatus === "draft" || !video.thumbnailKey) {
+      return new Video(
+        new VideoId(video.id),
+        new AccountId(video.author),
+        new VideoKey(video.key),
+        new VideoTitle(video.title),
+      );
+    }
 
     return new Video(
       new VideoId(video.id),
@@ -166,10 +163,11 @@ export class VideoRepository implements IVideoRepository {
       new VideoKey(video.key),
       new VideoTitle(video.title),
       video.desc ? new VideoDescription(video.desc) : null,
-      video.thumbnailKey ? new ThumbnailKey(video.thumbnailKey) : null,
-      playlist ? new PlaylistId(playlist.id) : null,
+      new ThumbnailKey(video.thumbnailKey),
       video.category ? new VideoCategoryId(video.category) : null,
-      new VideoProcessingStatus(video.status as ProcessingStatusValue),
+      new VideoProcessingStatus(
+        video.processingStatus as ProcessingStatusValue,
+      ),
       new VideoAudience(video.isForKids, video.isAgeRestricted),
       new VideoPermissions(video.allowComments, video.allowDownloads),
       new VideoPrivacy((video.privacy ?? "private") as VideoPrivacyValue),
@@ -180,32 +178,11 @@ export class VideoRepository implements IVideoRepository {
     );
   }
 
-  private async syncPlaylist(
-    snapshot: VideoSnapshot,
-    tx: Transaction,
-  ): Promise<void> {
-    if (snapshot.playlistId === null) {
-      return;
-    }
-
-    await tx
-      .insert(videosToPlaylists)
-      .values({
-        video: snapshot.id,
-        playlist: snapshot.playlistId,
-        addedAt: new Date().toISOString(),
-      })
-      .onConflictDoNothing();
-  }
-
   private async syncTags(
-    snapshot: VideoSnapshot,
     tx: Transaction,
+    id: number,
+    tagNames: string[],
   ): Promise<void> {
-    await tx.delete(videosToTags).where(eq(videosToTags.video, snapshot.id));
-
-    const tagNames = [...new Set(snapshot.tags)];
-
     for (const tagName of tagNames) {
       const createdTags = await tx
         .insert(tags)
@@ -231,7 +208,7 @@ export class VideoRepository implements IVideoRepository {
       await tx
         .insert(videosToTags)
         .values({
-          video: snapshot.id,
+          video: id,
           tag: tagId,
         })
         .onConflictDoNothing();

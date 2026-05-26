@@ -29,13 +29,13 @@ export const videos = pgTable("videos", {
   category: integer("category").references(() => categories.id, {
     onDelete: "set null",
   }),
-  status: varchar("status", { length: 24 }).notNull().default("PROCESSING"),
+  processingStatus: varchar("processing_status", { length: 24 }).notNull(),
   isForKids: boolean("is_for_kids").notNull().default(false),
   isAgeRestricted: boolean("is_age_restricted").notNull().default(false),
   allowComments: boolean("allow_comments").notNull().default(true),
   allowDownloads: boolean("allow_downloads").notNull().default(false),
   privacy: privacyEnum("privacy"),
-  publicationStatus: varchar("publication_status", { length: 50 }),
+  publicationStatus: varchar("publication_status", { length: 24 }).notNull(),
   createdAt: timestamp("created_at", {
     mode: "string",
     withTimezone: true,

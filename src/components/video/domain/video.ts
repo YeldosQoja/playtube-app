@@ -4,7 +4,6 @@ import {
   CommentId,
   Content,
 } from "#components/comment/domain/value-objects.js";
-import { PlaylistId } from "#components/playlist/domain/value-objects.js";
 import {
   ThumbnailKey,
   type ProcessingStatusValue,
@@ -30,7 +29,6 @@ export interface VideoSnapshot {
   title: string;
   description: string | null;
   thumbnailKey: string | null;
-  playlistId: number | null;
   categoryId: number | null;
   processingStatus: ProcessingStatusValue;
   isForKids: boolean;
@@ -51,7 +49,6 @@ export class Video {
   private title: VideoTitle;
   private description: VideoDescription | null;
   private thumbnailKey: ThumbnailKey | null;
-  private playlistId: PlaylistId | null;
   private categoryId: VideoCategoryId | null;
   private processingStatus: VideoProcessingStatus;
   private audience: VideoAudience;
@@ -86,8 +83,7 @@ export class Video {
     title: VideoTitle,
     description: VideoDescription | null,
     thumbnailKey: ThumbnailKey,
-    playlistId: PlaylistId | null,
-    categoryId: VideoCategoryId,
+    categoryId: VideoCategoryId | null,
     processingStatus: VideoProcessingStatus,
     audience: VideoAudience,
     permissions: VideoPermissions,
@@ -103,7 +99,6 @@ export class Video {
     title: VideoTitle,
     description?: VideoDescription | null,
     thumbnailKey?: ThumbnailKey,
-    playlistId?: PlaylistId | null,
     categoryId?: VideoCategoryId | null,
     processingStatus?: VideoProcessingStatus,
     audience?: VideoAudience,
@@ -120,7 +115,6 @@ export class Video {
       this.description = null;
       this.thumbnailKey = null;
       this.categoryId = null;
-      this.playlistId = null;
       this.processingStatus = new VideoProcessingStatus("PENDING_UPLOAD");
       this.audience = new VideoAudience(false, false);
       this.permissions = new VideoPermissions(true, false);
@@ -151,7 +145,6 @@ export class Video {
     this.description = description ?? null;
     this.thumbnailKey = thumbnailKey;
     this.categoryId = categoryId ?? null;
-    this.playlistId = playlistId ?? null;
     this.processingStatus = processingStatus;
     this.audience = audience;
     this.permissions = permissions;
@@ -173,7 +166,6 @@ export class Video {
     title: VideoTitle,
     description: VideoDescription | null,
     thumbnailKey: ThumbnailKey,
-    playlistId: PlaylistId | null,
     categoryId: VideoCategoryId,
     audience: VideoAudience,
     permissions: VideoPermissions,
@@ -183,7 +175,6 @@ export class Video {
     this.title = title;
     this.description = description;
     this.thumbnailKey = thumbnailKey;
-    this.playlistId = playlistId;
     this.categoryId = categoryId;
     this.audience = audience;
     this.permissions = permissions;
@@ -237,7 +228,6 @@ export class Video {
       title: this.title.value,
       description: this.description?.value ?? null,
       thumbnailKey: this.thumbnailKey?.value ?? null,
-      playlistId: this.playlistId?.value ?? null,
       categoryId: this.categoryId?.value ?? null,
       processingStatus: this.processingStatus.value,
       isForKids: this.audience.isForKids,

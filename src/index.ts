@@ -68,6 +68,7 @@ const accountService = new AccountService(accountRepository);
 const accountController = createAccountController(accountService);
 const accountRouter = createAccountRouter(accountController);
 const videoRepository = new VideoRepository();
+const playlistRepository = new PlaylistRepository();
 const videoAssetService = new CloudFrontAdapter(new SecretsManagerClient());
 const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
 const uploadStorage = new S3Adapter({
@@ -77,6 +78,7 @@ const uploadService = new UploadService(accountRepository, uploadStorage);
 const videoService = new VideoService(
   new VideoFactory(),
   videoRepository,
+  playlistRepository,
   videoAssetService,
   accountRepository,
   uploadService,
@@ -91,7 +93,6 @@ const commentService = new CommentService(
 );
 const commentController = createCommentController(commentService);
 const commentRouter = createCommentRouter(commentController);
-const playlistRepository = new PlaylistRepository();
 const playlistService = new PlaylistService(
   playlistRepository,
   videoRepository,

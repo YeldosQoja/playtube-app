@@ -8,10 +8,6 @@ import {
 } from "@aws-sdk/client-sqs";
 import dotenv from "dotenv";
 import { getAwsConfig } from "#config/aws.js";
-import {
-  updateStatusForMultipleVideos,
-  updateVideoStatus,
-} from "#db/queries.js";
 
 dotenv.config();
 
@@ -39,7 +35,7 @@ const processMessages = async (messages: Message[]) => {
       },
     } = body.Records[0];
     const storageKey = (key as string).split("/")[2] as string;
-    await updateVideoStatus(storageKey, "PROCESSED");
+    // await updateVideoStatus(storageKey, "PROCESSED");
   } else {
     const keys = messages.map((message) => {
       const body = JSON.parse(message.Body ?? "");
@@ -51,7 +47,7 @@ const processMessages = async (messages: Message[]) => {
       const storageKey = (key as string).split("/")[2] as string;
       return storageKey;
     });
-    await updateStatusForMultipleVideos([...new Set(keys)], "PROCESSED");
+    // await updateStatusForMultipleVideos([...new Set(keys)], "PROCESSED");
   }
 };
 

@@ -1,5 +1,5 @@
 import express from "express";
-import logger from "#lib/logger.js";
+import { loggerService } from "#lib/logger.service.js";
 import cors from "cors";
 import { createAccountController } from "#app/account/account.controller.js";
 import { createAccountRouter } from "#app/account/account.route.js";
@@ -11,8 +11,9 @@ import { createUploadController } from "#app/upload/upload.controller.js";
 import { createUploadRouter } from "#app/upload/upload.route.js";
 import { createVideoController } from "#app/video/video.controller.js";
 import { createVideoRouter } from "#app/video/video.route.js";
-import { isAuthenticated } from "#middlewares/is-authenticated.js";
-import { handleError } from "#middlewares/handle-error.js";
+import { createIsAuthenticated } from "#middlewares/is-authenticated.js";
+import { createHandleError } from "#middlewares/handle-error.js";
+import { RequestValidator } from "#middlewares/validate.js";
 import { pinoHttp } from "pino-http";
 import { AccountRepository } from "#lib/data/account.repository.js";
 import { CommentRepository } from "#lib/data/comment.repository.js";
@@ -36,7 +37,7 @@ const origins = process.env["ALLOWED_ORIGINS"] || "*";
 
 app.use(
   pinoHttp({
-    logger,
+    logger: loggerService.getHttpLogger(),
     autoLogging: {
       ignore: (req) => req.method === "OPTIONS",
     },
@@ -63,17 +64,21 @@ app.use((req, res, next) => {
 });
 
 // Account component construction
+const requestValidator = new RequestValidator(loggerService);
 const accountRepository = new AccountRepository();
 const accountService = new AccountService(accountRepository);
 const accountController = createAccountController(accountService);
-const accountRouter = createAccountRouter(accountController);
+const accountRouter = createAccountRouter(accountController, requestValidator);
 const videoRepository = new VideoRepository();
 const playlistRepository = new PlaylistRepository();
 const videoAssetService = new CloudFrontAdapter(new SecretsManagerClient());
 const forcePathStyle = process.env["AWS_S3_FORCE_PATH_STYLE"] || false;
-const uploadStorage = new S3Adapter({
-  forcePathStyle: forcePathStyle === "true",
-});
+const uploadStorage = new S3Adapter(
+  {
+    forcePathStyle: forcePathStyle === "true",
+  },
+  loggerService,
+);
 const uploadService = new UploadService(accountRepository, uploadStorage);
 const videoService = new VideoService(
   new VideoFactory(),
@@ -82,9 +87,10 @@ const videoService = new VideoService(
   videoAssetService,
   accountRepository,
   uploadService,
+  loggerService,
 );
 const videoController = createVideoController(videoService);
-const videoRouter = createVideoRouter(videoController);
+const videoRouter = createVideoRouter(videoController, requestValidator);
 const commentRepository = new CommentRepository();
 const commentService = new CommentService(
   commentRepository,
@@ -92,16 +98,21 @@ const commentService = new CommentService(
   accountRepository,
 );
 const commentController = createCommentController(commentService);
-const commentRouter = createCommentRouter(commentController);
+const commentRouter = createCommentRouter(commentController, requestValidator);
 const playlistService = new PlaylistService(
   playlistRepository,
   videoRepository,
   accountRepository,
 );
 const playlistController = createPlaylistController(playlistService);
-const playlistRouter = createPlaylistRouter(playlistController);
-const uploadController = createUploadController(uploadService);
-const uploadRouter = createUploadRouter(uploadController);
+const playlistRouter = createPlaylistRouter(
+  playlistController,
+  requestValidator,
+);
+const uploadController = createUploadController(uploadService, loggerService);
+const uploadRouter = createUploadRouter(uploadController, requestValidator);
+const isAuthenticated = createIsAuthenticated(loggerService);
+const handleError = createHandleError(loggerService);
 
 app.use("/", isAuthenticated);
 app.use("/account", accountRouter);
@@ -112,11 +123,11 @@ app.use("/playlist", playlistRouter);
 app.use(handleError);
 
 process.on("uncaughtException", (error) => {
-  logger.fatal(error, "Uncaught exception found");
+  loggerService.fatal(error, "Uncaught exception found");
 });
 
 process.on("unhandledRejection", (reason) => {
-  logger.fatal({ reason }, "Unhandled rejection found");
+  loggerService.fatal({ reason }, "Unhandled rejection found");
 });
 
 app.listen(port, () => {

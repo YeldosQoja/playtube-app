@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import z, { ZodObject, ZodOptional, ZodType } from "zod";
 import AppError from "#utils/AppError.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
-import logger from "#lib/logger.js";
+import type { LoggerService } from "#lib/logger.service.js";
 
 type RequestSchema = ZodObject<{
   body: ZodObject<{ [key: string]: ZodType }> | ZodOptional;
@@ -13,35 +13,39 @@ type RequestSchema = ZodObject<{
 type ParsedQs = Request["query"];
 type Params = Request["params"];
 
-export function validate(schema: RequestSchema) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { query, body, params } = req;
+export class RequestValidator {
+  constructor(private readonly loggerService: LoggerService) {}
 
-      logger.debug({ query, body, params }, "Request data: ");
+  validate(schema: RequestSchema) {
+    return async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { query, body, params } = req;
 
-      const result = await schema.parseAsync({
-        query,
-        body,
-        params,
-      });
+        this.loggerService.debug({ query, body, params }, "Request data: ");
 
-      req.query = result.query as ParsedQs;
-      req.body = result.body;
-      req.params = result.params as Params;
+        const result = await schema.parseAsync({
+          query,
+          body,
+          params,
+        });
 
-      next();
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        logger.error(z.treeifyError(error), "Validation failed.");
-        throw new AppError(
-          `Incorrect request data.`,
-          HttpStatusCode.BAD_REQUEST,
-          false,
-        );
+        req.query = result.query as ParsedQs;
+        req.body = result.body;
+        req.params = result.params as Params;
+
+        next();
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          this.loggerService.error(z.treeifyError(error), "Validation failed.");
+          throw new AppError(
+            `Incorrect request data.`,
+            HttpStatusCode.BAD_REQUEST,
+            false,
+          );
+        }
+
+        next(error);
       }
-
-      next(error);
-    }
-  };
+    };
+  }
 }

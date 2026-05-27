@@ -1,5 +1,5 @@
 import express from "express";
-import { validate } from "#middlewares/validate.js";
+import type { RequestValidator } from "#middlewares/validate.js";
 import { addVideoToPlaylistSchema } from "#validators/playlists/add-video.schema.js";
 import { createPlaylistSchema } from "#validators/playlists/create-playlist.schema.js";
 import { deletePlaylistSchema } from "#validators/playlists/delete-playlist.schema.js";
@@ -9,30 +9,45 @@ import { removeVideoFromPlaylistSchema } from "#validators/playlists/remove-vide
 import { updatePlaylistSchema } from "#validators/playlists/update-playlist.schema.js";
 import type { PlaylistController } from "./playlist.controller.js";
 
-export function createPlaylistRouter(playlistController: PlaylistController) {
+export function createPlaylistRouter(
+  playlistController: PlaylistController,
+  requestValidator: RequestValidator,
+) {
   const router = express.Router();
 
-  router.post("/create", validate(createPlaylistSchema), playlistController.create);
-  router.get("/list", validate(listPlaylistsSchema), playlistController.list);
-  router.get("/detail/:id", validate(getPlaylistSchema), playlistController.get);
+  router.post(
+    "/create",
+    requestValidator.validate(createPlaylistSchema),
+    playlistController.create,
+  );
+  router.get(
+    "/list",
+    requestValidator.validate(listPlaylistsSchema),
+    playlistController.list,
+  );
+  router.get(
+    "/detail/:id",
+    requestValidator.validate(getPlaylistSchema),
+    playlistController.get,
+  );
   router.put(
     "/update/:id",
-    validate(updatePlaylistSchema),
+    requestValidator.validate(updatePlaylistSchema),
     playlistController.update,
   );
   router.delete(
     "/delete/:id",
-    validate(deletePlaylistSchema),
+    requestValidator.validate(deletePlaylistSchema),
     playlistController.delete,
   );
   router.post(
     "/video/add/:playlistId/:videoId",
-    validate(addVideoToPlaylistSchema),
+    requestValidator.validate(addVideoToPlaylistSchema),
     playlistController.addVideo,
   );
   router.delete(
     "/video/remove/:playlistId/:videoId",
-    validate(removeVideoFromPlaylistSchema),
+    requestValidator.validate(removeVideoFromPlaylistSchema),
     playlistController.removeVideo,
   );
 

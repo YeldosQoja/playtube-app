@@ -24,7 +24,7 @@ import {
 } from "#components/upload/upload.policy.js";
 import { PlaylistId } from "#components/playlist/domain/value-objects.js";
 import { getAwsConfig } from "#config/aws.js";
-import logger from "#lib/logger.js";
+import type { LoggerService } from "#lib/logger.service.js";
 import { UploadService } from "#components/upload/upload.service.js";
 import { IPlaylistRepository } from "#components/playlist/domain/playlist.repository.js";
 
@@ -76,6 +76,7 @@ export class VideoService {
     private videoAccessPort: VideoAccessPort,
     private accountRepository: IAccountRepository,
     private uploadService: UploadService,
+    private loggerService: LoggerService,
   ) {}
 
   async createDraft(input: CreateDraftInputDTO): Promise<CreateDraftResultDTO> {
@@ -207,7 +208,7 @@ export class VideoService {
       thumbnailKey,
     )}`;
 
-    logger.info(
+    this.loggerService.info(
       { cookies: credentials.cookies, thumbnailUrl },
       "Video and thumbnail urls generated.",
     );

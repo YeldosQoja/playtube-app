@@ -1,38 +1,42 @@
 import type { NextFunction, Request, Response } from "express";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import AppError from "#utils/AppError.js";
-import logger from "#lib/logger.js";
+import type { LoggerService } from "#lib/logger.service.js";
 
 class ErrorHandler {
+  constructor(private readonly loggerService: LoggerService) {}
+
   async handle(error: AppError, res: Response) {
-    logger.error(error, error.message);
+    this.loggerService.error(error, error.message);
     res.status(error.statusCode).send({
       error: error.message,
     });
   }
 }
 
-export const errorHandler = new ErrorHandler();
+export const createHandleError = (loggerService: LoggerService) => {
+  const errorHandler = new ErrorHandler(loggerService);
 
-export const handleError = async (
-  err: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  if (res.headersSent) {
-    next(err);
-    return;
-  }
+  return async (
+    err: unknown,
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
 
-  if (err instanceof AppError) {
-    await errorHandler.handle(err, res);
-    return;
-  }
+    if (err instanceof AppError) {
+      await errorHandler.handle(err, res);
+      return;
+    }
 
-  logger.error(err, "DB or external services failed.");
+    loggerService.error(err, "DB or external services failed.");
 
-  res
-    .status(HttpStatusCode.SERVER_ERROR)
-    .send({ error: "Something went wrong!" });
+    res
+      .status(HttpStatusCode.SERVER_ERROR)
+      .send({ error: "Something went wrong!" });
+  };
 };

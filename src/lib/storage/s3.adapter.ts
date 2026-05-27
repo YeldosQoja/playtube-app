@@ -15,13 +15,16 @@ import type {
   UploadSession,
   VideoUploadPort,
 } from "#components/upload/ports/video-upload.port.js";
-import logger from "#lib/logger.js";
+import type { LoggerService } from "#lib/logger.service.js";
 
 export class S3Adapter implements VideoUploadPort {
   private readonly client: S3Client;
   private readonly bucketName: string;
 
-  constructor(config?: S3ClientConfig) {
+  constructor(
+    config: S3ClientConfig | undefined,
+    private readonly loggerService: LoggerService,
+  ) {
     this.client = new S3Client(config ?? {});
     this.bucketName = getAwsConfig().s3.bucketName;
   }
@@ -57,7 +60,7 @@ export class S3Adapter implements VideoUploadPort {
       ContentType: contentType,
     });
 
-    logger.info(
+    this.loggerService.info(
       { bucket: this.bucketName, uploadPath },
       "Video upload session requested.",
     );

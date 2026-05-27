@@ -1,17 +1,24 @@
 import express from "express";
-import { validate } from "#middlewares/validate.js";
+import type { RequestValidator } from "#middlewares/validate.js";
 import { profileSchema } from "#validators/account/get-profile.schema.js";
 import { AccountController } from "./account.controller.js";
 import { createAccountSchema } from "#validators/account/create-account.schema.js";
 
-export function createAccountRouter(accountController: AccountController) {
+export function createAccountRouter(
+  accountController: AccountController,
+  requestValidator: RequestValidator,
+) {
   const router = express.Router();
 
-  router.get("/profile", validate(profileSchema), accountController.getProfile);
+  router.get(
+    "/profile",
+    requestValidator.validate(profileSchema),
+    accountController.getProfile,
+  );
 
   router.post(
     "/create",
-    validate(createAccountSchema),
+    requestValidator.validate(createAccountSchema),
     accountController.create,
   );
 

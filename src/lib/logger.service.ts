@@ -1,8 +1,63 @@
-import type { Logger } from "pino";
-import logger from "./logger.js";
+import pino, { type Logger } from "pino";
+import dotenv from "dotenv";
 
 export class LoggerService {
-  constructor(private readonly pinoLogger: Logger) {}
+  private readonly pinoLogger: Logger;
+
+  constructor() {
+    dotenv.config();
+
+    const level = process.env["NODE_ENV"] !== "production" ? "trace" : "info";
+    const fileTransport = pino.transport({
+      targets: [
+        {
+          target: "pino/file",
+          level,
+          options: { destination: `${import.meta.dirname}/app.log` },
+        },
+        {
+          target: "pino-pretty",
+          level,
+        },
+      ],
+    });
+
+    this.pinoLogger = pino(
+      {
+        timestamp: pino.stdTimeFunctions.isoTime,
+        level,
+        redact: {
+          paths: [
+            "name",
+            "username",
+            "address",
+            "phone",
+            "email",
+            "password",
+            "salt",
+            "user.firstName",
+            "user.lastName",
+            "user.email",
+            "user.username",
+            "user.password",
+            "user.salt",
+            "*.user.firstName",
+            "*.user.lastName",
+            "*.user.email",
+            "*.user.username",
+            "*.user.password",
+            "*.user.salt",
+          ],
+          remove: true,
+        },
+      },
+      fileTransport,
+    );
+  }
+
+  getHttpLogger(): Logger {
+    return this.pinoLogger;
+  }
 
   trace(...args: Parameters<Logger["trace"]>): void {
     this.pinoLogger.trace(...args);
@@ -29,4 +84,4 @@ export class LoggerService {
   }
 }
 
-export const loggerService = new LoggerService(logger);
+export const loggerService = new LoggerService();

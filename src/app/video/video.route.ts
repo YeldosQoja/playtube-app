@@ -1,5 +1,5 @@
 import express from "express";
-import { validate } from "#middlewares/validate.js";
+import type { RequestValidator } from "#middlewares/validate.js";
 import { createDraftSchema } from "#validators/videos/create-draft.schema.js";
 import { deleteVideoSchema } from "#validators/videos/delete-video.schema.js";
 import { getVideoSchema } from "#validators/videos/get-video.schema.js";
@@ -7,28 +7,35 @@ import { listVideosSchema } from "#validators/videos/list-videos.schema.js";
 import { saveVideoSchema } from "#validators/videos/save-video.schema.js";
 import type { VideoController } from "./video.controller.js";
 
-export function createVideoRouter(videoController: VideoController) {
+export function createVideoRouter(
+  videoController: VideoController,
+  requestValidator: RequestValidator,
+) {
   const router = express.Router();
 
   router.post(
     "/draft",
-    validate(createDraftSchema),
+    requestValidator.validate(createDraftSchema),
     videoController.createDraft,
   );
-  router.get("/list", validate(listVideosSchema), videoController.list);
+  router.get(
+    "/list",
+    requestValidator.validate(listVideosSchema),
+    videoController.list,
+  );
   router.put(
     "/save/:videoKey",
-    validate(saveVideoSchema),
+    requestValidator.validate(saveVideoSchema),
     videoController.save,
   );
   router.delete(
     "/delete/:videoKey",
-    validate(deleteVideoSchema),
+    requestValidator.validate(deleteVideoSchema),
     videoController.delete,
   );
   router.get(
     "/detail/:videoKey",
-    validate(getVideoSchema),
+    requestValidator.validate(getVideoSchema),
     videoController.get,
   );
 

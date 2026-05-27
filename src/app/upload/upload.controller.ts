@@ -1,12 +1,15 @@
 import type { RequestHandler } from "express";
 import { UploadService } from "#components/upload/upload.service.js";
-import logger from "#lib/logger.js";
+import type { LoggerService } from "#lib/logger.service.js";
 import { HttpStatusCode } from "#utils/HttpStatusCode.js";
 import { nanoid } from "nanoid";
 import { CreateUploadSessionBody } from "#validators/upload/create-upload-session.schema.js";
 import { CompleteMultipartUploadBody } from "#validators/upload/complete-multipart-upload.schema.js";
 
-export function createUploadController(uploadService: UploadService) {
+export function createUploadController(
+  uploadService: UploadService,
+  loggerService: LoggerService,
+) {
   return {
     createUploadSession: (async (req, res) => {
       const { contentType } = req.body as CreateUploadSessionBody;
@@ -17,7 +20,7 @@ export function createUploadController(uploadService: UploadService) {
         contentType,
       });
 
-      logger.info("Signed upload url created.");
+      loggerService.info("Signed upload url created.");
       res.status(HttpStatusCode.OK).send({
         msg: "Success!",
         url,
@@ -35,7 +38,7 @@ export function createUploadController(uploadService: UploadService) {
         parts,
       });
 
-      logger.info("Multipart upload complete.");
+      loggerService.info("Multipart upload complete.");
 
       res.status(HttpStatusCode.OK).send({
         msg: `Multipart upload session ${uploadSessionId} has completed!`,
@@ -50,7 +53,7 @@ export function createUploadController(uploadService: UploadService) {
         userId: req.user.id,
       });
 
-      logger.info("Multipart upload aborted.");
+      loggerService.info("Multipart upload aborted.");
 
       res.status(HttpStatusCode.OK).send({
         msg: `Multipart upload session ${uploadSessionId} has been cancelled successfully!`,

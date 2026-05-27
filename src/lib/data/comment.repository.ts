@@ -3,7 +3,6 @@ import { AccountId } from "#components/account/domain/value-objects.js";
 import {
   createComment,
   type Comment,
-  type CommentSnapshot,
 } from "#components/comment/domain/comment.js";
 import type { ICommentRepository } from "#components/comment/domain/comment.repository.js";
 import {
